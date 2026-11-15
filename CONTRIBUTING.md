@@ -25,12 +25,11 @@ Bug reports and pull requests are welcome.
 4. Keep `frontend/src/workspace/cognivioRule.ts` in sync with
    `backend/app/core/agent_rules.py` if you touch either.
 
-## Contributor license agreement
+## License of contributions
 
-The maintainers offer Cognivio under AGPL-3.0 and may offer it under other licenses. To
-keep that possible, we ask every contributor to sign a contributor license agreement on
-their first pull request. You keep the copyright to your contribution and grant the
-maintainers the right to license it under other terms.
+You keep the copyright to what you contribute. By opening a pull request you agree to
+license it under the license of the directory it touches: MIT for `mcp_server/`, AGPL-3.0
+for everything else.
 
 ## Style
 
