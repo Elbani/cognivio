@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { REPO_URL } from "./lib/links";
 
 const css = `
 .d44{color:#111;font-family:-apple-system,"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:18px;line-height:1.5;background:#fff;height:100vh;height:100dvh;overflow-y:auto;overflow-x:hidden;scroll-snap-type:y mandatory;scroll-behavior:smooth;position:relative}
@@ -33,6 +34,8 @@ const css = `
 .d44-s.o .d44-word{font-size:clamp(44px,8.5vw,124px);letter-spacing:-.045em;line-height:.95;white-space:normal;max-width:1000px}
 .d44-cta{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:34px}
 .d44-cta a{font:inherit;font-size:17px;padding:13px 24px;border:1.5px solid #111;background:#111;color:#fff;text-decoration:none;cursor:pointer;border-radius:4px}
+.d44-cta a.alt{background:#fff;color:#111}
+.d44-txt a{color:inherit;text-decoration:underline;text-underline-offset:3px}
 .d44-dots{position:fixed;right:18px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:10px;z-index:3}
 .d44-dots button{width:10px;height:10px;border-radius:50%;border:1.5px solid currentColor;background:transparent;padding:0;cursor:pointer;color:#111;opacity:.45}
 .d44-dots button.on{background:currentColor;opacity:1}
@@ -44,7 +47,9 @@ const css = `
 @media(max-width:720px){.d44-in{grid-template-columns:1fr;gap:22px;padding:10px 0 56px;align-content:center}.d44-word{font-size:clamp(48px,var(--w,34cqw),110px)}.d44-txt p{font-size:18px;line-height:1.4}.d44-dots{right:10px}.d44-s.d .d44-word,.d44-s.o .d44-word{font-size:clamp(34px,9vw,64px)}.d44-list li{font-size:15.5px;padding:7px 0}.d44-list b{display:inline}}
 `;
 
-export default function Landing() {
+/** `hosted` is true when this server runs with plans (SELF_HOSTED=false): the page then
+ * offers the free plan and points teams at `contactEmail`. */
+export default function Landing({ hosted, contactEmail }: { hosted: boolean; contactEmail: string | null }) {
   const [active, setActive] = useState(0);
   const root = useRef<HTMLDivElement>(null);
   const DARK = [false, false, true, false, false, false];
@@ -91,7 +96,7 @@ export default function Landing() {
       {active < 5 && <button type="button" className={"d44-next" + (DARK[active] ? " dark" : "")} onClick={() => go(active + 1)} aria-label="next screen">↓</button>}
 
       <section className="d44-s o">
-        <nav className="d44-nav"><b>Cognivio</b><span><Link to="/login">Log in</Link><Link to="/register">Sign up</Link></span></nav>
+        <nav className="d44-nav"><b>Cognivio</b><span><a href={REPO_URL}>GitHub</a><Link to="/login">Log in</Link><Link to="/register">Sign up</Link></span></nav>
         <div className="d44-in">
           <h1 className="d44-word">Memory for AI coding tools.</h1>
           <div className="d44-txt">
@@ -151,10 +156,16 @@ export default function Landing() {
           <h2 className="d44-word">Your team's memory, in one place.</h2>
           <div className="d44-txt">
             <p>Setup takes two minutes. Your tool writes the first notes itself. You fix the mistakes.</p>
-            <p>Your code stays with you. It runs on your own server.</p>
+            {hosted ? (
+              <p>Free for one person. For teams, {contactEmail ? <a href={`mailto:${contactEmail}?subject=Cognivio%20for%20teams`}>contact us</a> : "contact us"}.</p>
+            ) : (
+              <p>Your code stays with you. It runs on your own server.</p>
+            )}
+            <p>Cognivio is open source. Anyone can read the code, change it and run it on their own server.</p>
           </div>
           <div className="d44-cta">
-            <Link to="/register">Create an account</Link>
+            <Link to="/register">{hosted ? "Create a free account" : "Create an account"}</Link>
+            <a className="alt" href={REPO_URL}>Get the code on GitHub</a>
           </div>
         </div>
       </section>

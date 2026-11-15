@@ -15,7 +15,7 @@ from app.models.schemas import document_id
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 # Plans the app actually understands (the Free-plan gates in orgs.py check for
-# "enterprise"). Admin plan changes are restricted to these so the gates stay coherent.
+# "enterprise", shown to users as Teams). Admin plan changes are restricted to these so the gates stay coherent.
 ALLOWED_PLANS = {"free", "enterprise"}
 
 # Lookups whose resultCount we treat as the "did the KB return a doc?" signal. Used by

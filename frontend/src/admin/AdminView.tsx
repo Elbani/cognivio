@@ -233,7 +233,7 @@ function OverviewTab({ token, showPlans }: { token: string; showPlans: boolean }
       sub: `${data.retrieval.hits}/${data.retrieval.lookups} lookups found a doc`
     },
     { n: act.totalEvents, l: "agent actions (30d)", sub: `${act.activeKeys} of ${t.apiKeys} keys active` },
-    ...(showPlans ? [{ n: data.plans?.enterprise ?? 0, l: "enterprise orgs", sub: `${data.plans?.free ?? 0} on free` }] : []),
+    ...(showPlans ? [{ n: data.plans?.enterprise ?? 0, l: "orgs on Teams", sub: `${data.plans?.free ?? 0} on free` }] : []),
     {
       n: t.suspendedUsers,
       l: "suspended",
@@ -357,7 +357,7 @@ function UsageTab({ token }: { token: string }) {
                     const max = Math.max(1, ...data.topOrgs.map((x) => x.actions));
                     return (
                       <div className="adm-bar wide" key={o.orgId}>
-                        <span title={o.name || o.orgId}>{o.name || o.orgId}{o.plan === "enterprise" && <span className="adm-pill admin" style={{ marginLeft: 6 }}>ent</span>}</span>
+                        <span title={o.name || o.orgId}>{o.name || o.orgId}{o.plan === "enterprise" && <span className="adm-pill admin" style={{ marginLeft: 6 }}>teams</span>}</span>
                         <span className="track"><span className="fill" style={{ width: `${(o.actions / max) * 100}%` }} /></span>
                         <span className="v">{o.actions}</span>
                       </div>
@@ -548,7 +548,7 @@ function UserUsageModal({ token, user, onClose }: { token: string; user: AdminUs
               <h3>By organization</h3>
               {data.perOrg.length === 0 ? <div className="adm-empty-sm">No organizations.</div> : data.perOrg.map((o) => (
                 <div className="adm-detail-row" key={o.orgId}>
-                  <span>{o.name || o.orgId}<span className="adm-pill" style={{ marginLeft: 6 }}>{o.role}</span>{o.plan === "enterprise" && <span className="adm-pill admin" style={{ marginLeft: 6 }}>ent</span>}</span>
+                  <span>{o.name || o.orgId}<span className="adm-pill" style={{ marginLeft: 6 }}>{o.role}</span>{o.plan === "enterprise" && <span className="adm-pill admin" style={{ marginLeft: 6 }}>teams</span>}</span>
                   <span className="adm-muted">{o.actions} actions</span>
                 </div>
               ))}
@@ -633,7 +633,7 @@ function OrgsTab({ token, showPlans }: { token: string; showPlans: boolean }) {
                   <td>
                     <select className="adm-plan" value={o.plan} disabled={busy === o.id} onChange={(e) => setPlan(o, e.target.value)}>
                       <option value="free">free</option>
-                      <option value="enterprise">enterprise</option>
+                      <option value="enterprise">teams</option>
                     </select>
                   </td>
                   )}
@@ -676,7 +676,7 @@ function OrgDetailModal({ token, orgId, onClose }: { token: string; orgId: strin
     <div className="adm-overlay" onClick={onClose}>
       <div className="adm-modal" onClick={(e) => e.stopPropagation()}>
         <div className="adm-modal-head">
-          <h2>{data?.name ?? "Organization"}{data && <span className={`adm-pill ${data.plan === "enterprise" ? "admin" : ""}`} style={{ marginLeft: 8 }}>{data.plan}</span>}</h2>
+          <h2>{data?.name ?? "Organization"}{data && <span className={`adm-pill ${data.plan === "enterprise" ? "admin" : ""}`} style={{ marginLeft: 8 }}>{data.plan === "enterprise" ? "teams" : data.plan}</span>}</h2>
           <button className="adm-link" onClick={onClose}>✕ Close</button>
         </div>
         {error && <div className="adm-error">{error}</div>}

@@ -83,16 +83,17 @@ PlatformAdmin = Annotated[dict, Depends(platform_admin)]
 
 
 def effective_plan(org: dict | None) -> str:
-    """The plan the org behaves as. SELF_HOSTED installs treat every org as Enterprise,
-    so the API and the SPA (which reads the plan from the org payload) agree."""
+    """The plan the org behaves as. The Teams plan is stored as "enterprise", its original
+    name, so existing data keeps working. SELF_HOSTED installs treat every org as being
+    on it, so the API and the SPA (which reads the plan from the org payload) agree."""
     if settings.self_hosted:
         return "enterprise"
     return (org or {}).get("plan", "free")
 
 
 def plan_unlocked(org: dict | None, user: dict) -> bool:
-    """True when Enterprise-only features are available: the install is SELF_HOSTED, the
-    org is on the Enterprise plan, or the signed-in user is a platform admin
+    """True when Teams-plan features are available: the install is SELF_HOSTED, the
+    org is on the Teams plan, or the signed-in user is a platform admin
     (ADMIN_EMAILS). Admins operate the platform and must never be stopped by the
     Free-plan paywall on their own workspaces."""
     if is_platform_admin(user.get("email")):

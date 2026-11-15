@@ -15,6 +15,8 @@ export type Appearance = {
   userTheme: UserTheme;
   /** True when the server runs without plans, so plan labels and controls are hidden. */
   selfHosted?: boolean;
+  /** Contact address for the Teams plan on a hosted install. */
+  contactEmail?: string | null;
   updatedAt?: string | null;
   updatedBy?: string | null;
 };

@@ -149,7 +149,7 @@ async def test_revoked_key_rejected(client, auth_headers, workspace) -> None:
 
 
 async def test_team_restricted_key_cannot_cross_teams(client, auth_headers, enterprise_workspace) -> None:
-    workspace = enterprise_workspace  # a second team is an Enterprise feature
+    workspace = enterprise_workspace  # a second team needs the Teams plan
     other = await client.post(
         f"/api/orgs/{workspace['org_id']}/teams", json={"name": "Other Team"}, headers=auth_headers
     )

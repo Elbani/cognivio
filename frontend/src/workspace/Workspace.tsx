@@ -50,7 +50,7 @@ const NAV: { id: View; label: string; glyph: string }[] = [
 // Sections that can be restored from ?view= on refresh / deep-link.
 const VIEWS: View[] = ["overview", "map", "memories", "graph", "agents", "insights", "repo", "projectdocs", "members", "trash", "help", "settings", "review"];
 
-export function Workspace({ token, user, ui = "terminal", selfHosted = false, onLogout, onUserUpdated }: { token: string; user: User | null; ui?: UserTheme; selfHosted?: boolean; onLogout: () => void; onUserUpdated: (user: User) => void }) {
+export function Workspace({ token, user, ui = "terminal", selfHosted = false, contactEmail = null, onLogout, onUserUpdated }: { token: string; user: User | null; ui?: UserTheme; selfHosted?: boolean; contactEmail?: string | null; onLogout: () => void; onUserUpdated: (user: User) => void }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [orgs, setOrgs] = useState<Org[]>([]);
   const [orgId, setOrgId] = useState<string | null>(() => localStorage.getItem("kb-org"));
@@ -260,13 +260,13 @@ export function Workspace({ token, user, ui = "terminal", selfHosted = false, on
 
   // Platform admins (ADMIN_EMAILS) are never paywalled; the backend applies the same rule.
   const isPlatformAdmin = Boolean(user?.isAdmin);
-  const isEnterprise = isPlatformAdmin || currentOrg?.plan === "enterprise";
+  const hasTeams = isPlatformAdmin || currentOrg?.plan === "enterprise";
   const canAddOrg = isPlatformAdmin || orgs.length === 0 || orgs.some((o) => o.plan === "enterprise");
   const upsell = (what: string) =>
-    setError(`${what} are an Enterprise feature. The Free plan is a single developer (1 org, 1 team, 1 project). Ask your administrator to enable them.`);
-  const createProject = () => (isEnterprise || folders.length === 0 ? setDialog({ kind: "new-project", value: "" }) : upsell("Multiple projects"));
+    setError(`${what} are on the Teams plan. The free plan covers one person (1 org, 1 team, 1 project). ${contactEmail ? `Contact ${contactEmail} to turn on Teams.` : "Ask your administrator to turn on Teams."}`);
+  const createProject = () => (hasTeams || folders.length === 0 ? setDialog({ kind: "new-project", value: "" }) : upsell("Multiple projects"));
   const createOrg = () => (canAddOrg ? setDialog({ kind: "new-org", value: "" }) : upsell("Multiple organizations"));
-  const createTeam = () => (isEnterprise || teams.length === 0 ? setDialog({ kind: "new-team", value: "" }) : upsell("Multiple teams"));
+  const createTeam = () => (hasTeams || teams.length === 0 ? setDialog({ kind: "new-team", value: "" }) : upsell("Multiple teams"));
   const renameOrg = () => setDialog({ kind: "rename-org", value: currentOrg?.name ?? "" });
   const renameTeam = () => setDialog({ kind: "rename-team", value: currentTeam?.name ?? "" });
 
@@ -344,7 +344,7 @@ export function Workspace({ token, user, ui = "terminal", selfHosted = false, on
         <div className="ws-rail-brand"><span className="mk">◆</span>Cognivio</div>
         <ScopeMenu
           token={token} orgs={orgs} teams={teams} orgId={orgId} teamId={teamId}
-          showPlan={!selfHosted} canManage={canManage} canAddOrg={canAddOrg} canAddTeam={canManage && (isEnterprise || teams.length === 0)}
+          showPlan={!selfHosted} contactEmail={contactEmail} canManage={canManage} canAddOrg={canAddOrg} canAddTeam={canManage && (hasTeams || teams.length === 0)}
           onSelectOrg={(id) => { setOrgId(id); setSelectedId(null); }}
           onSelectTeam={(oid, tid) => { setOrgId(oid); setTeamId(tid); setSelectedId(null); }}
           onNewOrg={createOrg} onNewTeam={createTeam} onRenameOrg={renameOrg} onRenameTeam={renameTeam}
@@ -448,7 +448,7 @@ export function Workspace({ token, user, ui = "terminal", selfHosted = false, on
           ) : view === "projectdocs" ? (
             <ProjectDocsView token={token} teamId={teamId!} />
           ) : view === "members" ? (
-            <MembersView token={token} orgId={orgId!} unlocked={isEnterprise} members={members} canManage={canManage} currentUserId={user?.id ?? null} onChanged={() => apiRequest<Member[]>(`/api/orgs/${orgId}/members`, { token }).then(setMembers).catch(() => undefined)} />
+            <MembersView token={token} orgId={orgId!} contactEmail={contactEmail} unlocked={hasTeams} members={members} canManage={canManage} currentUserId={user?.id ?? null} onChanged={() => apiRequest<Member[]>(`/api/orgs/${orgId}/members`, { token }).then(setMembers).catch(() => undefined)} />
           ) : view === "help" ? (
             <HelpView />
           ) : view === "settings" ? (

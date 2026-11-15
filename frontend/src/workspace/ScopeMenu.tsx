@@ -3,10 +3,10 @@ import { apiRequest, Org, Team } from "../lib/api";
 
 // The org and team switcher at the top of the sidebar: one button that names where you
 // are, and one menu that lists every organization with its teams, the current one ticked,
-// and the create actions right where they apply. Enterprise-only actions show as locked
+// and the create actions right where they apply. Teams-plan actions show as locked
 // instead of failing after the click.
 export function ScopeMenu({
-  token, orgs, teams, orgId, teamId, showPlan, canManage, canAddOrg, canAddTeam,
+  token, orgs, teams, orgId, teamId, showPlan, contactEmail, canManage, canAddOrg, canAddTeam,
   onSelectOrg, onSelectTeam, onNewOrg, onNewTeam, onRenameOrg, onRenameTeam
 }: {
   token: string;
@@ -17,8 +17,9 @@ export function ScopeMenu({
   canManage: boolean;
   canAddOrg: boolean;
   canAddTeam: boolean;
-  /** False on an install without plans, where an "Enterprise" label means nothing. */
+  /** False on an install without plans, where a plan label means nothing. */
   showPlan: boolean;
+  contactEmail: string | null;
   onSelectOrg: (id: string) => void;
   onSelectTeam: (orgId: string, teamId: string) => void;
   onNewOrg: () => void;
@@ -74,7 +75,7 @@ export function ScopeMenu({
               <div key={o.id} className="ws-scope-group">
                 <div className="ws-scope-head">
                   <span className="ws-scope-headname">{o.name}</span>
-                  {showPlan && o.plan === "enterprise" && <span className="ws-scope-tag">Enterprise</span>}
+                  {showPlan && o.plan === "enterprise" && <span className="ws-scope-tag">Teams</span>}
                   {isCurrent && canManage && (
                     <button type="button" className="ws-scope-act" onClick={() => { setOpen(false); onRenameOrg(); }}>Rename</button>
                   )}
@@ -98,7 +99,7 @@ export function ScopeMenu({
                 {isCurrent ? (
                   <button type="button" className="ws-scope-new" disabled={!canAddTeam} onClick={() => { setOpen(false); onNewTeam(); }}>
                     <span className="ws-scope-tick" aria-hidden="true">+</span>New team
-                    {!canAddTeam && <span className="ws-scope-tag lock">Enterprise</span>}
+                    {!canAddTeam && <span className="ws-scope-tag lock">Teams</span>}
                   </button>
                 ) : (
                   <button type="button" className="ws-scope-new" onClick={() => { setOpen(false); onSelectOrg(o.id); }}>
@@ -112,10 +113,10 @@ export function ScopeMenu({
           <div className="ws-scope-foot">
             <button type="button" className="ws-scope-new" disabled={!canAddOrg} onClick={() => { setOpen(false); onNewOrg(); }}>
               <span className="ws-scope-tick" aria-hidden="true">+</span>New organization
-              {!canAddOrg && <span className="ws-scope-tag lock">Enterprise</span>}
+              {!canAddOrg && <span className="ws-scope-tag lock">Teams</span>}
             </button>
             {locked && (
-              <p className="ws-scope-note">The Free plan is one organization with one team. For more, ask your administrator.</p>
+              <p className="ws-scope-note">The free plan is one organization with one team. For more, {contactEmail ? <>write to <a href={`mailto:${contactEmail}?subject=Cognivio%20for%20teams`}>{contactEmail}</a></> : "ask your administrator"}.</p>
             )}
           </div>
         </div>

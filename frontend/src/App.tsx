@@ -90,7 +90,7 @@ function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/" element={<Landing />} />
+      <Route path="/" element={<Landing hosted={!appearance.selfHosted} contactEmail={appearance.contactEmail ?? null} />} />
       <Route
         path="/login"
         element={auth.token ? <Navigate to="/app" replace /> : <AuthPage mode="login" ui={ui} onAuth={handleAuth} />}
@@ -127,6 +127,7 @@ function AppRoutes() {
               user={auth.user}
               ui={ui}
               selfHosted={Boolean(appearance.selfHosted)}
+              contactEmail={appearance.contactEmail ?? null}
               onLogout={logout}
               onUserUpdated={(user) => setAuth((current) => ({ ...current, user }))}
             />

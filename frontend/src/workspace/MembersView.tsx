@@ -10,18 +10,20 @@ export function MembersView({
   members,
   canManage,
   currentUserId,
+  contactEmail,
   onChanged
 }: {
   token: string;
   orgId: string;
-  /** Enterprise plan, or the viewer is a platform admin: team features are available. */
+  /** Teams plan, or the viewer is a platform admin: team features are available. */
   unlocked: boolean;
+  contactEmail: string | null;
   members: Member[];
   canManage: boolean;
   currentUserId: string | null;
   onChanged: () => void;
 }) {
-  const isEnterprise = unlocked;
+  const hasTeams = unlocked;
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("editor");
   const [error, setError] = useState("");
@@ -53,7 +55,7 @@ export function MembersView({
         People in this organization and what they can do. Roles apply across all teams.
       </p>
 
-      {canManage && isEnterprise && (
+      {canManage && hasTeams && (
         <div className="ws-filters" style={{ marginBottom: 18 }}>
           <span className="ws-search"><input placeholder="Add by email (existing account)…" value={email} onChange={(e) => setEmail(e.target.value)} /></span>
           <select className="ws-select" value={role} onChange={(e) => setRole(e.target.value as Role)}>
@@ -62,12 +64,12 @@ export function MembersView({
           <button className="ws-btn primary" onClick={invite}>Add member</button>
         </div>
       )}
-      {canManage && !isEnterprise && (
+      {canManage && !hasTeams && (
         <div className="ws-card" style={{ marginBottom: 18, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
           <div style={{ flex: 1, minWidth: 240 }}>
-            <strong>Free plan: single developer</strong>
+            <strong>Free plan: one person</strong>
             <div style={{ color: "var(--text-secondary)", fontSize: 13, marginTop: 4 }}>
-              Inviting teammates and shared org knowledge are <b>Enterprise</b> features. Ask your administrator to enable Teams for this organization.
+              Inviting teammates and shared org knowledge are on the <b>Teams</b> plan. {contactEmail ? <>Write to <a href={`mailto:${contactEmail}?subject=Cognivio%20for%20teams`}>{contactEmail}</a> to turn it on for this organization.</> : "Ask your administrator to turn it on for this organization."}
             </div>
           </div>
         </div>

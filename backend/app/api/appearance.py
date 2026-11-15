@@ -35,6 +35,8 @@ async def load_appearance(db: AsyncIOMotorDatabase) -> dict:
         "userTheme": doc.get("userTheme", DEFAULTS["userTheme"]),
         # Lets the SPA hide plan labels and controls on an install that has no plans.
         "selfHosted": settings.self_hosted,
+        # Public contact address for the Teams plan, or None.
+        "contactEmail": settings.contact_email or None,
         "updatedAt": doc["updatedAt"].isoformat() if isinstance(doc.get("updatedAt"), datetime) else None,
         "updatedBy": doc.get("updatedBy"),
     }
