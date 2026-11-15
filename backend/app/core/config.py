@@ -28,8 +28,8 @@ class Settings(BaseSettings):
     resend_api_key: str = Field(default="", alias="RESEND_API_KEY")
     # Sender address on your Resend-verified domain. Required when RESEND_API_KEY is set.
     email_from: str = Field(default="", alias="EMAIL_FROM")
-    # Contact address for the Teams plan, shown on the landing page and in the plan limit
-    # messages when SELF_HOSTED is false. Empty = the messages say to ask an administrator.
+    # Contact address for the Teams plan, shown in the plan limit messages when
+    # SELF_HOSTED is false. Empty = the messages say to ask an administrator.
     contact_email: str = Field(default="", alias="CONTACT_EMAIL")
     # Public URL of the app. Links in emails are built from it, never from the request's
     # Host header, so it is required when RESEND_API_KEY is set.

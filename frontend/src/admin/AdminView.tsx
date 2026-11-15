@@ -799,7 +799,7 @@ function ActionsTab({ token }: { token: string }) {
 // --- Appearance ---
 
 const THEMES: { id: Appearance["userTheme"]; label: string; blurb: string }[] = [
-  { id: "editorial", label: "Editorial", blurb: "White page, Helvetica, black buttons. Matches the \"Read. Write. Know.\" landing page." },
+  { id: "editorial", label: "Editorial", blurb: "White page, Helvetica, black buttons." },
   { id: "terminal", label: "Terminal", blurb: "Dark console, monospace, green accent. The original look." }
 ];
 
