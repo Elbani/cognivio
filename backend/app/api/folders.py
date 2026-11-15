@@ -76,7 +76,7 @@ async def create_folder(payload: FolderCreate, ctx: TeamCtx, db: Db) -> FolderOu
     ):
         raise HTTPException(
             status_code=402,
-            detail=f"Multiple projects are an Enterprise feature. The Free plan includes one. {settings.upgrade_hint}",
+            detail=f"Multiple projects are on the Teams plan. The free plan includes one. {settings.upgrade_hint}",
         )
     await ensure_parent_exists(db, ctx.team_id, payload.parentId)
 

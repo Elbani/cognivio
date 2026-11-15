@@ -30,7 +30,7 @@ async def test_create_subfolder(client: AsyncClient, auth_headers, workspace) ->
 
 
 async def test_list_folders(client: AsyncClient, auth_headers, enterprise_workspace) -> None:
-    workspace = enterprise_workspace  # two top-level projects = an Enterprise feature
+    workspace = enterprise_workspace  # two top-level projects need the Teams plan
     await client.post(_folders_url(workspace), json={"name": "Alpha"}, headers=auth_headers)
     await client.post(_folders_url(workspace), json={"name": "Beta"}, headers=auth_headers)
     resp = await client.get(_folders_url(workspace), headers=auth_headers)

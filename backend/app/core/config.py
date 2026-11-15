@@ -28,8 +28,8 @@ class Settings(BaseSettings):
     resend_api_key: str = Field(default="", alias="RESEND_API_KEY")
     # Sender address on your Resend-verified domain. Required when RESEND_API_KEY is set.
     email_from: str = Field(default="", alias="EMAIL_FROM")
-    # Optional address shown in the Free-plan limit messages. Empty = the message tells
-    # the user to ask their administrator.
+    # Contact address for the Teams plan, shown on the landing page and in the plan limit
+    # messages when SELF_HOSTED is false. Empty = the messages say to ask an administrator.
     contact_email: str = Field(default="", alias="CONTACT_EMAIL")
     # Public URL of the app. Links in emails are built from it, never from the request's
     # Host header, so it is required when RESEND_API_KEY is set.
@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     admin_emails: str = Field(default="", alias="ADMIN_EMAILS")
 
     # true (the default) means no plans: every org gets unlimited orgs, teams, members and
-    # top-level projects. Set false to run a hosted service with Free and Enterprise plans.
+    # top-level projects. Set false to run a hosted service with a free plan and a Teams plan.
     self_hosted: bool = Field(default=True, alias="SELF_HOSTED")
 
     # false closes sign-up: only existing accounts can log in. Use it once your team has
@@ -66,8 +66,8 @@ class Settings(BaseSettings):
     @property
     def upgrade_hint(self) -> str:
         if self.contact_email:
-            return f"Contact {self.contact_email} to upgrade."
-        return "Ask your administrator to upgrade the plan."
+            return f"Contact {self.contact_email} to turn on Teams."
+        return "Ask your administrator to turn on Teams."
 
     @property
     def admin_email_set(self) -> set[str]:

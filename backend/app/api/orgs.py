@@ -119,14 +119,14 @@ async def list_orgs(user: CurrentVerifiedUser, db: Db) -> list[OrgOut]:
 @router.post("/orgs", response_model=OrgOut, status_code=status.HTTP_201_CREATED)
 async def create_org(payload: OrgCreate, user: CurrentVerifiedUser, db: Db) -> OrgOut:
     user_id = document_id(user)
-    # Free plan = a single organization. Multiple orgs is an Enterprise feature.
+    # Free plan = a single organization. More needs the Teams plan.
     my_org_ids = await db.memberships.distinct("orgId", {"userId": user_id})
     if my_org_ids and not plan_unlocked(None, user):
         plans = await db.organizations.distinct("plan", {"_id": {"$in": my_org_ids}})
         if "enterprise" not in plans:
             raise HTTPException(
                 status_code=402,
-                detail=f"Multiple organizations are an Enterprise feature. The Free plan includes one. {settings.upgrade_hint}",
+                detail=f"Multiple organizations are on the Teams plan. The free plan includes one. {settings.upgrade_hint}",
             )
     org = await create_org_with_owner(db, user_id, payload.name)
     return org_out(org, Role.owner.value)
@@ -201,14 +201,14 @@ async def invite_member(payload: MemberInvite, ctx: OrgCtx, db: Db, background_t
     if user is None:
         raise HTTPException(status_code=404, detail="No user with that email")
 
-    # Free plan = single developer. Adding a *new* teammate is an Enterprise feature.
+    # Free plan = one person. Adding a *new* teammate needs the Teams plan.
     if not plan_unlocked(ctx.org, ctx.user):
         existing = await db.memberships.distinct("userId", {"orgId": ctx.org_id})
         if document_id(user) not in existing and len(existing) >= 1:
             raise HTTPException(
                 status_code=402,
-                detail="Adding teammates is an Enterprise feature. The Free plan is for a single "
-                f"developer. {settings.upgrade_hint}",
+                detail="Adding teammates is on the Teams plan. The free plan is for one person. "
+                f"{settings.upgrade_hint}",
             )
 
     if payload.teamId is not None:
@@ -286,7 +286,7 @@ async def create_team(payload: TeamCreate, ctx: OrgCtx, db: Db) -> TeamOut:
     if not plan_unlocked(ctx.org, ctx.user) and await db.teams.count_documents({"orgId": ctx.org_id}) >= 1:
         raise HTTPException(
             status_code=402,
-            detail=f"Multiple teams are an Enterprise feature. The Free plan includes one team. {settings.upgrade_hint}",
+            detail=f"Multiple teams are on the Teams plan. The free plan includes one team. {settings.upgrade_hint}",
         )
     now = datetime.now(timezone.utc)
     slug = await _unique_slug(db, "teams", slugify(payload.name), {"orgId": ctx.org_id})

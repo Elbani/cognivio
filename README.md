@@ -12,9 +12,19 @@ touches a file and writes a short note when it finishes.
   <img src="docs/how-it-works-light.svg" alt="A coding agent asks Cognivio for context, gets the project map and the relevant docs, does the work, then writes back what it learned." width="960">
 </picture>
 
-Cognivio is a self-hosted server with a web workspace. Agents talk to it over the Model
-Context Protocol (MCP). It runs from one Docker image plus MongoDB, and the server is open
-source under AGPL-3.0.
+Cognivio is a server with a web workspace. Agents talk to it over the Model Context
+Protocol (MCP).
+
+## Two ways to use it
+
+- **Hosted.** Sign up at [cognivio.app](https://cognivio.app). It is free for one person.
+  For a team, contact us from the site.
+- **Self-hosted.** Cognivio is open source. Anyone can read the code, change it and run it
+  on their own server, with no limit on people, teams or projects. It runs from one Docker
+  image plus MongoDB. The [quick start](#quick-start) takes three commands.
+
+The server is licensed under AGPL-3.0 and the local connector under MIT. See
+[License](#license) for what that asks of you.
 
 ## What changes for your team
 
@@ -151,11 +161,11 @@ Set these in the environment or in `.env`. See `.env.example`.
 | `ADMIN_EMAILS` | Comma-separated emails that can open the `/admin` console. |
 | `REGISTRATION_OPEN` | `false` closes sign-up. Default `true`. |
 | `RESEND_API_KEY`, `EMAIL_FROM` | Email through Resend. With no key, the server sends no email and new accounts skip verification. With a key, `EMAIL_FROM` and `PUBLIC_URL` are required. |
-| `SELF_HOSTED` | Default `true`, which means no plan limits. `false` turns on Free and Enterprise plans for running a hosted service. |
+| `SELF_HOSTED` | Default `true`, which means no plan limits. `false` turns on the free plan (one person) and the Teams plan, for running a hosted service. |
 | `FORWARDED_ALLOW_IPS` | Addresses of the reverse proxies uvicorn trusts for the client IP. |
 | `EMBEDDINGS_ENABLED` | `false` turns off the embedding model and leaves keyword search. |
 | `CORS_ORIGINS` | Comma-separated allowed origins. The web app is same-origin in production. |
-| `CONTACT_EMAIL` | Optional address shown in plan limit messages. |
+| `CONTACT_EMAIL` | Contact address for the Teams plan when `SELF_HOSTED=false`. Shown on the landing page and in plan limit messages. |
 | `DISABLE_DOCS` | `true` hides `/docs`, `/redoc` and `/openapi.json`. |
 
 ## Deployment
