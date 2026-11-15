@@ -147,6 +147,16 @@ async def create_indexes(db: AsyncIOMotorDatabase) -> None:
     await db.api_keys.create_index("keyHash", unique=True)
     await db.api_keys.create_index([("orgId", ASCENDING)])
 
+    # Single sign-on: an email domain belongs to one organization, and a pending
+    # sign-in expires on its own.
+    await db.organizations.create_index(
+        "sso.domains", unique=True,
+        partialFilterExpression={"sso.domains": {"$exists": True}},
+        name="sso_domains_unique",
+    )
+    await db.sso_states.create_index("expiresAt", expireAfterSeconds=0)
+    await db.api_keys.create_index([("orgId", ASCENDING), ("createdBy", ASCENDING)])
+
     # Audit log
     await db.audit_log.create_index([("orgId", ASCENDING), ("at", ASCENDING)])
     # Platform-wide usage analytics (admin /usage, /overview) scan the whole window by time.

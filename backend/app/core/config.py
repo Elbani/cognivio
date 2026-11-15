@@ -13,6 +13,10 @@ class Settings(BaseSettings):
     # Short-lived access JWT; refreshed via the long-lived refresh-token cookie below.
     access_token_minutes: int = Field(default=30, alias="ACCESS_TOKEN_MINUTES")
     refresh_token_days: int = Field(default=30, alias="REFRESH_TOKEN_DAYS")
+    # A single sign-on session ends this many hours after sign-in, however active it is.
+    # The person then passes the identity provider again, so someone the provider has
+    # deactivated loses access within this window.
+    sso_session_hours: int = Field(default=12, ge=1, alias="SSO_SESSION_HOURS")
     cors_origins: str = Field(
         default="http://localhost:5173,http://127.0.0.1:5173", alias="CORS_ORIGINS"
     )

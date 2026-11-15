@@ -75,6 +75,18 @@ export type AdminOrgDetail = {
   activity30d: number;
 };
 
+export type AdminOrgSso = {
+  configured: boolean;
+  enabled: boolean;
+  required: boolean;
+  issuer: string;
+  clientId: string;
+  hasSecret: boolean;
+  domains: string[];
+  defaultRole: Role;
+  redirectUri: string;
+};
+
 export type AdminUser = {
   id: string;
   email: string;
@@ -168,6 +180,9 @@ export type Org = {
   slug: string;
   role: Role;
   plan?: string;
+  ssoEnabled?: boolean;
+  ssoRequired?: boolean;
+  ssoDomains?: string[];
   createdAt: string;
   updatedAt: string;
 };

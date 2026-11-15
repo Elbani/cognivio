@@ -138,6 +138,19 @@ function AppRoutes() {
   );
 }
 
+const SSO_ERRORS: Record<string, string> = {
+  not_configured: "Single sign-on is not set up for this email domain.",
+  provider: "Your identity provider could not complete the sign-in. Try again, or ask your administrator.",
+  denied: "The sign-in was cancelled at your identity provider.",
+  state: "The sign-in expired or was started in another browser. Try again.",
+  no_email: "Your identity provider did not share an email address.",
+  unverified: "Your identity provider reports this email address as unverified.",
+  domain: "That email address is outside the domains your organization signs in with.",
+  identity: "This email address is linked to a different identity. Ask your administrator.",
+  suspended: "This account has been suspended.",
+  retry: "Something went wrong. Try again."
+};
+
 function AuthPage({
   mode,
   ui,
@@ -148,12 +161,23 @@ function AuthPage({
   onAuth: (payload: AuthResponse) => void;
 }) {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  // A failed single sign-on comes back here with a short code in the URL.
+  const ssoError = params.get("sso_error");
+  const [error, setError] = useState(ssoError ? SSO_ERRORS[ssoError] ?? SSO_ERRORS.provider : "");
   const [loading, setLoading] = useState(false);
   const isRegister = mode === "register";
+
+  function startSso() {
+    if (!email.includes("@")) {
+      setError("Enter your work email, then choose Sign in with SSO.");
+      return;
+    }
+    window.location.assign(`/api/auth/sso/start?email=${encodeURIComponent(email.trim())}`);
+  }
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -201,6 +225,12 @@ function AuthPage({
           <button className="au-btn" disabled={loading}>
             {loading ? "..." : isRegister ? "Create account" : "Log in"}
           </button>
+          {!isRegister && (
+            <button type="button" className="au-link" onClick={startSso}
+              style={{ background: "none", border: 0, padding: 0, width: "100%", cursor: "pointer", font: "inherit" }}>
+              Sign in with SSO
+            </button>
+          )}
           <Link to={isRegister ? "/login" : "/register"} className="au-link">
             {isRegister ? "Already have an account? login" : "Need an account? register"}
           </Link>

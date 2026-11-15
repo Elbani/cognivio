@@ -74,6 +74,9 @@ class OrgOut(BaseModel):
     slug: str
     role: Role
     plan: str = "free"
+    ssoEnabled: bool = False
+    ssoRequired: bool = False
+    ssoDomains: list[str] = Field(default_factory=list)
     createdAt: datetime
     updatedAt: datetime
 

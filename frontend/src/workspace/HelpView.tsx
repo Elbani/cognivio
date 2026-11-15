@@ -28,6 +28,7 @@ export function HelpView() {
         <a href="#types">Doc types</a>
         <a href="#roles">Roles</a>
         <a href="#keys">API keys</a>
+        <a href="#sso">Single sign-on</a>
         <a href="#rest">REST API</a>
         <a href="#mcp">Coding tools (MCP)</a>
         <a href="#auto">Auto-use it</a>
@@ -113,6 +114,75 @@ export function HelpView() {
       <p>The full key (<code>ak_…</code>) is shown once at creation. Pass it as a Bearer token:</p>
       <pre><code>{`Authorization: Bearer ak_your_key_here`}</code></pre>
       <p>Revoking a key takes effect immediately. Every agent call is recorded in the audit log (Agents → Activity).</p>
+      <p>Removing a member from the organization revokes the API keys that member created.</p>
+
+      <h2 id="sso">Single sign-on</h2>
+      <p>
+        Your team can sign in through your company's identity provider instead of a password. Cognivio speaks
+        OpenID Connect, which Google Workspace, Okta, Microsoft Entra ID and Keycloak all support.
+      </p>
+      <h3>Who sets it up</h3>
+      <p>
+        A platform admin, meaning an account listed in the server's <code>ADMIN_EMAILS</code> setting. Organization
+        owners and admins cannot change it. The identity provider can sign in as any address in the email domains
+        you enter, so the person who runs the server confirms the organization owns them.
+      </p>
+      <h3>Steps</h3>
+      <ol>
+        <li>Open the admin console at <code>/admin</code>, go to <b>Organizations</b>, open the organization, and
+          scroll to <b>Single sign-on</b>.</li>
+        <li>Copy the redirect URL the form shows. On this server it is <code>{`${BASE}/api/auth/sso/callback`}</code>,
+          unless the server's <code>PUBLIC_URL</code> says otherwise.</li>
+        <li>At your identity provider, create an OpenID Connect <b>web application</b> and paste that redirect URL
+          into it. The provider gives you a client ID and a client secret.</li>
+        <li>Back in the form, enter the issuer URL (see the table below), the client ID, the client secret and your
+          email domains, for example <code>example.com</code>. Pick the role new members get.</li>
+        <li>Save. Cognivio checks that it can read the provider's configuration and reports an error if the issuer
+          URL is wrong.</li>
+        <li>Test it: sign out, type your work email on the login page and choose <b>Sign in with SSO</b>.</li>
+      </ol>
+      <h3>Issuer URL by provider</h3>
+      <table>
+        <thead><tr><th>Provider</th><th>Issuer URL</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>Google Workspace</td><td><code>https://accounts.google.com</code></td>
+            <td>Create an OAuth client of type Web application in the Google Cloud console.</td></tr>
+          <tr><td>Okta</td><td><code>https://your-company.okta.com</code></td>
+            <td>Create an OIDC Web Application and assign the people who should have access.</td></tr>
+          <tr><td>Microsoft Entra ID</td><td><code>https://login.microsoftonline.com/TENANT_ID/v2.0</code></td>
+            <td>Under Token configuration, add the optional claim <code>email</code> to the ID token. Without it
+              sign-in fails, because Entra does not send the address by default.</td></tr>
+          <tr><td>Keycloak</td><td><code>https://your-host/realms/REALM</code></td>
+            <td>Create a client with Client authentication on and the Standard flow enabled.</td></tr>
+        </tbody>
+      </table>
+      <p>The issuer must use https, and the provider must send the person's email address in the ID token.</p>
+      <h3>What changes for your team</h3>
+      <ul>
+        <li>Anyone with an address in your domains can sign in. A first sign-in creates their account and adds them
+          to the organization with the role you picked.</li>
+        <li><b>Require it</b> turns off password login and sign-up for your domains. Platform admins keep password
+          login, so a provider outage cannot lock the server's operator out.</li>
+        <li>The first time an existing account signs in through the provider, its old password and sessions stop
+          working. The person can set a new password with <b>Forgot password</b> if they still need one.</li>
+        <li>A single sign-on session lasts 12 hours by default (<code>SSO_SESSION_HOURS</code>). After that the
+          person signs in through the provider again, so someone you deactivate there loses access to the
+          workspace within that time.</li>
+        <li>Deactivating someone at the provider does not revoke the API keys they created. Remove them under
+          <b>Members</b> as well, which does.</li>
+      </ul>
+      <h3>If sign-in fails</h3>
+      <ul>
+        <li><b>"Single sign-on is not set up for this email domain"</b>: the domain is not in the form, or
+          single sign-on is turned off.</li>
+        <li><b>"Your identity provider could not complete the sign-in"</b>: usually a wrong client secret, or a
+          redirect URL at the provider that does not match the one in the form exactly.</li>
+        <li><b>"Your identity provider did not share an email address"</b>: add the <code>email</code> claim (see
+          Entra ID above).</li>
+        <li><b>"That email address is outside the domains your organization signs in with"</b>: add the person's
+          domain to the form.</li>
+      </ul>
+      <p>The reason for each failed sign-in is also recorded in the admin console under <b>Security</b>.</p>
 
       <h2 id="rest">REST API</h2>
       <p>All agent endpoints live under <code>/api/v1</code> and require an API key.</p>
