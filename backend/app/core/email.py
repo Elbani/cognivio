@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import logging
 
+from html import escape
+
 import httpx
 
 from app.core.config import settings
@@ -71,7 +73,7 @@ def _app_link(path: str) -> str:
 
 
 async def send_verification(to: str, name: str, verify_url: str) -> bool:
-    who = (name or "there").strip()
+    who = escape((name or "there").strip())
     body = (
         f"<p>Hi {who},</p>"
         "<p>Thanks for signing up for Cognivio. Confirm your email to activate your account "
@@ -84,7 +86,7 @@ async def send_verification(to: str, name: str, verify_url: str) -> bool:
 
 
 async def send_welcome(to: str, name: str) -> bool:
-    who = (name or "there").strip()
+    who = escape((name or "there").strip())
     body = (
         f"<p>Hi {who},</p>"
         "<p>Welcome to Cognivio, a knowledge base your AI coding agents read before they act, "
@@ -97,9 +99,9 @@ async def send_welcome(to: str, name: str) -> bool:
 
 
 async def send_member_added(to: str, org_name: str, inviter_name: str | None = None) -> bool:
-    by = f" by {inviter_name}" if inviter_name else ""
+    by = f" by {escape(inviter_name)}" if inviter_name else ""
     body = (
-        f"<p>You've been added{by} to the <b>{org_name}</b> organization on Cognivio.</p>"
+        f"<p>You've been added{by} to the <b>{escape(org_name)}</b> organization on Cognivio.</p>"
         "<p>You can now read and contribute to your team's knowledge base.</p>"
         + _button(_app_link("/app"), "Open Cognivio")
     )
@@ -107,7 +109,7 @@ async def send_member_added(to: str, org_name: str, inviter_name: str | None = N
 
 
 async def send_password_reset(to: str, name: str, reset_url: str) -> bool:
-    who = (name or "there").strip()
+    who = escape((name or "there").strip())
     body = (
         f"<p>Hi {who},</p>"
         "<p>We received a request to reset your Cognivio password. This link expires in 1 hour "
@@ -120,7 +122,7 @@ async def send_password_reset(to: str, name: str, reset_url: str) -> bool:
 
 
 async def send_password_changed(to: str, name: str) -> bool:
-    who = (name or "there").strip()
+    who = escape((name or "there").strip())
     body = (
         f"<p>Hi {who},</p>"
         "<p>Your Cognivio password was just changed. If this was you, no action is needed.</p>"

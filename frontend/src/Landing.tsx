@@ -32,11 +32,7 @@ const css = `
 .d44-s.d .d44-word{font-size:clamp(40px,7vw,96px);letter-spacing:-.035em;line-height:1;white-space:normal}
 .d44-s.o .d44-word{font-size:clamp(44px,8.5vw,124px);letter-spacing:-.045em;line-height:.95;white-space:normal;max-width:1000px}
 .d44-cta{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:34px}
-.d44-cta a,.d44-cta button{font:inherit;font-size:17px;padding:13px 24px;border:1.5px solid #111;background:#111;color:#fff;text-decoration:none;cursor:pointer;border-radius:4px}
-.d44-cta button{background:#fff;color:#111}
-.d44-cta button:disabled{opacity:.5}
-.d44-fine{font-size:15px;color:#666;margin-top:30px}
-.d44-fine a{color:#666}
+.d44-cta a{font:inherit;font-size:17px;padding:13px 24px;border:1.5px solid #111;background:#111;color:#fff;text-decoration:none;cursor:pointer;border-radius:4px}
 .d44-dots{position:fixed;right:18px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:10px;z-index:3}
 .d44-dots button{width:10px;height:10px;border-radius:50%;border:1.5px solid currentColor;background:transparent;padding:0;cursor:pointer;color:#111;opacity:.45}
 .d44-dots button.on{background:currentColor;opacity:1}
@@ -155,10 +151,10 @@ export default function Landing() {
           <h2 className="d44-word">Your team's memory, in one place.</h2>
           <div className="d44-txt">
             <p>Setup takes two minutes. Your tool writes the first notes itself. You fix the mistakes.</p>
-            <p>Your code stays with you. Free for one person.</p>
+            <p>Your code stays with you. It runs on your own server.</p>
           </div>
           <div className="d44-cta">
-            <Link to="/register">Create a free account</Link>
+            <Link to="/register">Create an account</Link>
           </div>
         </div>
       </section>

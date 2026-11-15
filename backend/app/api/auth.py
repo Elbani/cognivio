@@ -54,8 +54,9 @@ VERIFY_TTL_HOURS = 24 * 7
 
 
 def _abs_base(request: Request) -> str:
-    """Absolute base URL for email links: PUBLIC_URL if set (the reliable prod value
-    behind a proxy), otherwise the host the request actually came in on."""
+    """Absolute base URL for links. Emailed links always use PUBLIC_URL (startup refuses
+    to run with email on and PUBLIC_URL unset), because the Host header is attacker
+    controlled. The request host is only a fallback for the link logged when email is off."""
     return (settings.public_url or str(request.base_url)).rstrip("/")
 
 
@@ -81,8 +82,6 @@ async def _issue_verification(db, user: dict, request: Request) -> str:
             "createdAt": now,
         }
     )
-    if not settings.resend_api_key:  # dev convenience: no email configured → log the link
-        logger.info("Email disabled, verify link for %s: %s", user["email"], _verify_link(request, raw))
     return raw
 
 
@@ -135,6 +134,8 @@ async def _start_session(db, response: Response, user: dict) -> TokenResponse:
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 @limiter.limit("5/minute")
 async def register(request: Request, response: Response, payload: UserCreate, db: Db, background_tasks: BackgroundTasks) -> TokenResponse:
+    if not settings.registration_open:
+        raise HTTPException(status_code=403, detail="Sign-up is closed on this server.")
     now = datetime.now(timezone.utc)
     user = {
         "email": payload.email.lower(),
@@ -158,8 +159,9 @@ async def register(request: Request, response: Response, payload: UserCreate, db
     user["_id"] = result.inserted_id
     await create_org_with_owner(db, document_id(user), f"{payload.name.strip()}'s Org")
     logger.info("New user registered: %s", payload.email.lower())
-    raw = await _issue_verification(db, user, request)
-    background_tasks.add_task(send_verification, user["email"], user["name"], _verify_link(request, raw))
+    if settings.email_enabled:
+        raw = await _issue_verification(db, user, request)
+        background_tasks.add_task(send_verification, user["email"], user["name"], _verify_link(request, raw))
 
     return await _start_session(db, response, user)
 
@@ -249,7 +251,7 @@ async def update_me(payload: ProfileUpdate, user: CurrentUser, db: Db) -> UserOu
 
 @router.post("/password", status_code=status.HTTP_204_NO_CONTENT)
 async def change_password(
-    payload: PasswordChange, user: CurrentUser, db: Db, background_tasks: BackgroundTasks
+    request: Request, payload: PasswordChange, user: CurrentUser, db: Db, background_tasks: BackgroundTasks
 ) -> None:
     if not verify_password(payload.currentPassword, user["passwordHash"]):
         raise HTTPException(status_code=400, detail="Current password is incorrect")
@@ -262,6 +264,10 @@ async def change_password(
             }
         },
     )
+    # Sign out every other session, so a stolen refresh cookie stops working. Keep this one.
+    current = request.cookies.get(REFRESH_COOKIE)
+    keep = {"tokenHash": {"$ne": hash_api_key(current)}} if current else {}
+    await db.refresh_tokens.delete_many({"userId": document_id(user), **keep})
     background_tasks.add_task(send_password_changed, user["email"], user.get("name", ""))
 
 
@@ -291,8 +297,9 @@ async def forgot_password(
         )
         background_tasks.add_task(send_password_reset, user["email"], user.get("name", ""), _reset_link(request, raw))
         logger.info("Password reset requested: %s", user["email"])
-        if not settings.resend_api_key:  # dev convenience when email isn't configured
-            logger.info("Email disabled, reset link for %s: %s", user["email"], _reset_link(request, raw))
+        if not settings.email_enabled:
+            # No email provider: the server log is the only way to deliver the link.
+            logger.warning("Email disabled, reset link for %s: %s", user["email"], _reset_link(request, raw))
     return {"ok": True}
 
 
@@ -323,6 +330,8 @@ async def reset_password(
     await db.password_resets.update_many(
         {"userId": rec["userId"], "usedAt": None}, {"$set": {"usedAt": now}}
     )
+    # A reset means the old credentials may be compromised: end every session.
+    await db.refresh_tokens.delete_many({"userId": rec["userId"]})
     background_tasks.add_task(send_password_changed, user["email"], user.get("name", ""))
     logger.info("Password reset completed: %s", user["email"])
 

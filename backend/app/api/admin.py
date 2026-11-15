@@ -208,7 +208,7 @@ async def overview(admin: PlatformAdmin, db: Db, days: int = Query(default=30, g
     async for e in db.security_events.find({"at": {"$gte": since}}, {"type": 1}):
         security_counts[e["type"]] = security_counts.get(e["type"], 0) + 1
 
-    # Plan mix across all orgs, monetization at a glance.
+    # Plan mix across all orgs.
     plan_counts: dict[str, int] = {}
     async for grp in db.organizations.aggregate([{"$group": {"_id": "$plan", "n": {"$sum": 1}}}]):
         plan_counts[grp["_id"] or "free"] = grp["n"]
@@ -691,8 +691,8 @@ async def get_org(org_id: str, admin: PlatformAdmin, db: Db) -> dict:
 async def set_org_plan(
     org_id: str, admin: PlatformAdmin, db: Db, request: Request, plan: str = Query(...)
 ) -> dict:
-    """Change an org's plan, the one switch that turns the 'contact us for Enterprise'
-    upsell into an actual upgrade. Free-plan gates in orgs.py read this field."""
+    """Change an org's plan. The Free-plan limits in orgs.py and folders.py read this
+    field. It has no effect when SELF_HOSTED is on, since every org is then unlimited."""
     org = await db.organizations.find_one({"_id": org_id})
     if org is None:
         raise HTTPException(status_code=404, detail="Organization not found")

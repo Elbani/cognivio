@@ -13,6 +13,8 @@ export type UserTheme = "terminal" | "editorial";
 
 export type Appearance = {
   userTheme: UserTheme;
+  /** True when the server runs without plans, so plan labels and controls are hidden. */
+  selfHosted?: boolean;
   updatedAt?: string | null;
   updatedBy?: string | null;
 };

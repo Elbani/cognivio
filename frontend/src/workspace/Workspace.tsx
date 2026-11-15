@@ -50,7 +50,7 @@ const NAV: { id: View; label: string; glyph: string }[] = [
 // Sections that can be restored from ?view= on refresh / deep-link.
 const VIEWS: View[] = ["overview", "map", "memories", "graph", "agents", "insights", "repo", "projectdocs", "members", "trash", "help", "settings", "review"];
 
-export function Workspace({ token, user, ui = "terminal", onLogout, onUserUpdated }: { token: string; user: User | null; ui?: UserTheme; onLogout: () => void; onUserUpdated: (user: User) => void }) {
+export function Workspace({ token, user, ui = "terminal", selfHosted = false, onLogout, onUserUpdated }: { token: string; user: User | null; ui?: UserTheme; selfHosted?: boolean; onLogout: () => void; onUserUpdated: (user: User) => void }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [orgs, setOrgs] = useState<Org[]>([]);
   const [orgId, setOrgId] = useState<string | null>(() => localStorage.getItem("kb-org"));
@@ -344,7 +344,7 @@ export function Workspace({ token, user, ui = "terminal", onLogout, onUserUpdate
         <div className="ws-rail-brand"><span className="mk">◆</span>Cognivio</div>
         <ScopeMenu
           token={token} orgs={orgs} teams={teams} orgId={orgId} teamId={teamId}
-          canManage={canManage} canAddOrg={canAddOrg} canAddTeam={canManage && (isEnterprise || teams.length === 0)}
+          showPlan={!selfHosted} canManage={canManage} canAddOrg={canAddOrg} canAddTeam={canManage && (isEnterprise || teams.length === 0)}
           onSelectOrg={(id) => { setOrgId(id); setSelectedId(null); }}
           onSelectTeam={(oid, tid) => { setOrgId(oid); setTeamId(tid); setSelectedId(null); }}
           onNewOrg={createOrg} onNewTeam={createTeam} onRenameOrg={renameOrg} onRenameTeam={renameTeam}

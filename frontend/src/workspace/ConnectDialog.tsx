@@ -168,7 +168,7 @@ export function ConnectDialog({ token, orgId, teamId, canManage, onClose }: {
                   <p className="connect-sub">Nothing to install, the MCP server is hosted here. Your tool connects over a URL with the key as a header. {setup[tool].where}</p>
                   <pre className="connect-pre"><code>{remoteSetup[tool].code}</code></pre>
                   <Copy text={remoteSetup[tool].code} />
-                  <p className="connect-sub" style={{ marginTop: 8 }}>No <code>uv</code>, no PATH, no install. (Remote MCP support varies by client/version, the <b>Local</b> tab is the universal fallback, and is the only one with <code>check_drift</code>, which reads your local files.)</p>
+                  <p className="connect-sub" style={{ marginTop: 8 }}>No <code>uv</code>, no PATH, no install. (Remote MCP support varies by client/version, the <b>Local</b> tab is the universal fallback.)</p>
                 </>
               ) : (
                 <>

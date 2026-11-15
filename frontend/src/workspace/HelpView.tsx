@@ -163,8 +163,7 @@ curl -X POST -H "Authorization: Bearer ak_…" -H "Content-Type: application/jso
       <p>
         The platform hosts an MCP server over Streamable HTTP at <code>{BASE}/mcp</code>. Point your tool at that URL
         with the key in an <code>Authorization</code> header, no <code>uv</code>, no <code>pipx</code>, no PATH, nothing
-        to install. (Remote MCP support varies by client/version; the Local option below is the universal fallback and
-        the only one with <code>check_drift</code>, which reads your local files.)
+        to install. (Remote MCP support varies by client/version; the Local option below is the universal fallback.)
       </p>
       <pre><code>{`# Claude Code
 claude mcp add --transport http cognivio ${BASE}/mcp \\
@@ -250,20 +249,21 @@ env = { KB_BASE_URL = "${BASE}", KB_API_KEY = "ak_your_key_here" }`}</code></pre
       <table>
         <thead><tr><th>Tool</th><th>What it does</th></tr></thead>
         <tbody>
-          <tr><td><code>prime_context(query, limit?)</code></td><td><b>Start here</b>: index + most relevant full docs in one call</td></tr>
+          <tr><td><code>prime_context(query, limit?)</code></td><td><b>Start here</b>: index + the most relevant docs as excerpts in one call</td></tr>
           <tr><td><code>seed_plan(team_id)</code></td><td>Call first when seeding: existing docs, undocumented areas, review state, and the ordered steps to write a starter set</td></tr>
           <tr><td><code>whoami()</code></td><td>Which org/scopes the key has</td></tr>
           <tr><td><code>list_teams()</code></td><td>Teams the key can read</td></tr>
           <tr><td><code>read_map(team_id)</code></td><td>Project Map + graph (follow-up orientation)</td></tr>
           <tr><td><code>search_memory(team_id, query, type?, tag?, limit?)</code></td><td>Find docs</td></tr>
           <tr><td><code>knowledge_gaps(days?, limit?)</code></td><td>Queries that found nothing: docs worth writing</td></tr>
-          <tr><td><code>check_drift(team_id?)</code></td><td>Docs whose referenced code changed after they were verified (remote: server-side repo; stdio: your working tree)</td></tr>
+          <tr><td><code>check_drift(team_id)</code></td><td>Docs whose referenced code changed after they were verified (remote: server-side repo; stdio: your working tree)</td></tr>
           <tr><td><code>plan_project_docs(team_id)</code></td><td>Call first to generate the human-facing developer handbook: recommended outline, existing sections, least-documented areas</td></tr>
           <tr><td><code>write_project_docs(team_id, summary, sections)</code></td><td>Publish the developer handbook as a new version snapshot (separate from the KB; never used in retrieval)</td></tr>
           <tr><td><code>get_memory(memory_id)</code></td><td>Read one doc in full</td></tr>
           <tr><td><code>get_related(memory_id)</code></td><td>Neighbors (links + backlinks)</td></tr>
           <tr><td><code>write_memory(team_id, title, content, type?, tags?)</code></td><td>Write back a doc (same title updates in place)</td></tr>
           <tr><td><code>mark_helpful(memory_id, helpful?, note?)</code></td><td>Rate whether a doc helped, boosts or demotes it in future <code>prime_context</code></td></tr>
+          <tr><td><code>setup_rule(tool?)</code></td><td>Returns the always-on rule file for Claude Code, Cursor or Codex, for the agent to write into the repo</td></tr>
           <tr><td><code>delete_memory(memory_id)</code></td><td>Trash a duplicate/obsolete doc (restorable in the UI)</td></tr>
         </tbody>
       </table>
@@ -302,7 +302,7 @@ env = { KB_BASE_URL = "${BASE}", KB_API_KEY = "ak_your_key_here" }`}</code></pre
 
       <h2 id="workflow">Recommended agent workflow</h2>
       <ul>
-        <li><b>Prime:</b> call <code>prime_context("the task")</code> (or <code>/context?q=…</code>) first, one call returns the index + the most relevant full docs.</li>
+        <li><b>Prime:</b> call <code>prime_context("the task")</code> (or <code>/context?q=…</code>) first, one call returns the index + the most relevant docs as excerpts.</li>
         <li><b>Orient (if needed):</b> <code>read_map</code> for the full graph of a team.</li>
         <li><b>Search:</b> use <code>search_memory</code> with a focused query and an optional <code>type</code>.</li>
         <li><b>Read:</b> pull full content with <code>get_memory</code>; follow connections with <code>get_related</code>.</li>

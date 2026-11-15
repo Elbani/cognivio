@@ -14,8 +14,8 @@ function AppRoutes() {
   const [auth, setAuth] = useState<AuthState>({ token: null, user: null });
   const [loading, setLoading] = useState(true);
   // Platform-wide look, chosen in the admin console: which theme the auth pages and the
-  // workspace use. Loaded before the first screen so
-  // nobody sees one theme flash into another.
+  // workspace use. Loaded before the first screen so nobody sees one theme flash into
+  // another.
   const [appearance, setAppearance] = useState<Appearance>(DEFAULT_APPEARANCE);
   const [appearanceLoading, setAppearanceLoading] = useState(true);
 
@@ -126,6 +126,7 @@ function AppRoutes() {
               token={auth.token}
               user={auth.user}
               ui={ui}
+              selfHosted={Boolean(appearance.selfHosted)}
               onLogout={logout}
               onUserUpdated={(user) => setAuth((current) => ({ ...current, user }))}
             />
@@ -336,7 +337,7 @@ function VerifyEmailGate({ user, token, ui, onRefresh, onLogout }: {
           {resent && <p className="au-ok">Sent, check your inbox (and spam).</p>}
           {error && <div className="au-error">{error}</div>}
           <button className="au-btn" onClick={onRefresh}>I've verified, continue</button>
-          <button type="button" className="au-demo" disabled={busy} onClick={resend}>{busy ? "..." : "Resend verification email"}</button>
+          <button type="button" className="au-ghost" disabled={busy} onClick={resend}>{busy ? "..." : "Resend verification email"}</button>
           <button type="button" className="au-link" onClick={onLogout} style={{ background: "none", border: 0, cursor: "pointer", width: "100%" }}>Log out</button>
     </AuthFrame>
   );
@@ -433,10 +434,9 @@ const authCss = `
 .au-terminal .au-btn{width:100%;background:#3ddc84;color:#06140c;border:0;border-radius:6px;padding:12px;font:inherit;font-weight:600;font-size:14px;cursor:pointer;margin-top:4px}
 .au-terminal .au-btn:hover{background:#54e896}
 .au-terminal .au-btn:disabled{opacity:.55;cursor:default}
-.au-terminal .au-demo{width:100%;background:transparent;color:#cdd6e0;border:1px solid #2b3744;border-radius:6px;padding:11px;font:inherit;font-weight:600;font-size:14px;cursor:pointer}
-.au-terminal .au-demo::before{content:"\\25B6  "}
-.au-terminal .au-demo:hover{border-color:#3ddc84;color:#3ddc84}
-.au-terminal .au-demo:disabled{opacity:.55;cursor:default}
+.au-terminal .au-ghost{width:100%;background:transparent;color:#cdd6e0;border:1px solid #2b3744;border-radius:6px;padding:11px;font:inherit;font-weight:600;font-size:14px;cursor:pointer}
+.au-terminal .au-ghost:hover{border-color:#3ddc84;color:#3ddc84}
+.au-terminal .au-ghost:disabled{opacity:.55;cursor:default}
 .au-terminal .au-error{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#fca5a5;padding:9px 12px;border-radius:6px;font-size:13px;margin-bottom:14px}
 .au-terminal .au-ok{color:#3ddc84;font-size:13px;margin:-8px 0 14px}
 .au-terminal .au-link{margin-top:18px;color:#7d8da0;font-size:13px}
@@ -454,9 +454,9 @@ const authCss = `
 .au-editorial .au-btn{width:100%;background:#111;color:#fff;border:1.5px solid #111;border-radius:4px;padding:13px;font:inherit;font-weight:600;font-size:17px;cursor:pointer;margin-top:4px}
 .au-editorial .au-btn:hover{background:#333;border-color:#333}
 .au-editorial .au-btn:disabled{opacity:.5;cursor:default}
-.au-editorial .au-demo{width:100%;background:#fff;color:#111;border:1.5px solid #111;border-radius:4px;padding:12px;font:inherit;font-weight:600;font-size:17px;cursor:pointer}
-.au-editorial .au-demo:hover{background:#f3efe4}
-.au-editorial .au-demo:disabled{opacity:.5;cursor:default}
+.au-editorial .au-ghost{width:100%;background:#fff;color:#111;border:1.5px solid #111;border-radius:4px;padding:12px;font:inherit;font-weight:600;font-size:17px;cursor:pointer}
+.au-editorial .au-ghost:hover{background:#f3efe4}
+.au-editorial .au-ghost:disabled{opacity:.5;cursor:default}
 .au-editorial .au-error{background:#fdecec;border:1px solid #f3b4b4;color:#b91c1c;padding:10px 12px;border-radius:4px;font-size:14px;margin-bottom:14px}
 .au-editorial .au-ok{color:#1d7a46;font-size:14px;margin:-8px 0 14px}
 .au-editorial .au-link{margin-top:20px;color:#555;font-size:15px;text-decoration:underline}

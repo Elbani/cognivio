@@ -6,7 +6,7 @@ import { apiRequest, Org, Team } from "../lib/api";
 // and the create actions right where they apply. Enterprise-only actions show as locked
 // instead of failing after the click.
 export function ScopeMenu({
-  token, orgs, teams, orgId, teamId, canManage, canAddOrg, canAddTeam,
+  token, orgs, teams, orgId, teamId, showPlan, canManage, canAddOrg, canAddTeam,
   onSelectOrg, onSelectTeam, onNewOrg, onNewTeam, onRenameOrg, onRenameTeam
 }: {
   token: string;
@@ -17,6 +17,8 @@ export function ScopeMenu({
   canManage: boolean;
   canAddOrg: boolean;
   canAddTeam: boolean;
+  /** False on an install without plans, where an "Enterprise" label means nothing. */
+  showPlan: boolean;
   onSelectOrg: (id: string) => void;
   onSelectTeam: (orgId: string, teamId: string) => void;
   onNewOrg: () => void;
@@ -72,7 +74,7 @@ export function ScopeMenu({
               <div key={o.id} className="ws-scope-group">
                 <div className="ws-scope-head">
                   <span className="ws-scope-headname">{o.name}</span>
-                  {o.plan === "enterprise" && <span className="ws-scope-tag">Enterprise</span>}
+                  {showPlan && o.plan === "enterprise" && <span className="ws-scope-tag">Enterprise</span>}
                   {isCurrent && canManage && (
                     <button type="button" className="ws-scope-act" onClick={() => { setOpen(false); onRenameOrg(); }}>Rename</button>
                   )}
