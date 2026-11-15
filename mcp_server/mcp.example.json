@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "cognivio": {
+      "command": "python",
+      "args": ["-m", "mcp_server.server"],
+      "env": {
+        "KB_BASE_URL": "http://localhost:8000",
+        "KB_API_KEY": "ak_replace_with_a_real_key"
+      }
+    }
+  }
+}

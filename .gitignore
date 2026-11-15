@@ -1,0 +1,22 @@
+.DS_Store
+.env
+.env.local
+.env.*.local
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+node_modules/
+dist/
+frontend/node_modules/
+frontend/dist/
+
+# Build artifacts
+*.tsbuildinfo
+
+# Local agent config & scratch artifacts
+.claude/
+
+# Emitted by the frontend type-check
+frontend/vite.config.js
+frontend/vite.config.d.ts
