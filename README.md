@@ -165,7 +165,7 @@ Set these in the environment or in `.env`. See `.env.example`.
 | `FORWARDED_ALLOW_IPS` | Addresses of the reverse proxies uvicorn trusts for the client IP. |
 | `EMBEDDINGS_ENABLED` | `false` turns off the embedding model and leaves keyword search. |
 | `CORS_ORIGINS` | Comma-separated allowed origins. The web app is same-origin in production. |
-| `CONTACT_EMAIL` | Contact address for the Teams plan when `SELF_HOSTED=false`. Shown on the landing page and in plan limit messages. |
+| `CONTACT_EMAIL` | Contact address for the Teams plan when `SELF_HOSTED=false`. Shown in plan limit messages. |
 | `DISABLE_DOCS` | `true` hides `/docs`, `/redoc` and `/openapi.json`. |
 
 ## Deployment

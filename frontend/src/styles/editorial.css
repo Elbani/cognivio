@@ -1,5 +1,5 @@
 /* ============ Editorial theme ============
-   The workspace look that matches the "Read. Write. Know." landing page: black on
+   The editorial workspace look: black on
    white, Helvetica, square corners, thin rules, no gradients. Applied when the
    workspace root carries data-ui="editorial" (set from the admin console). The
    dark/light toggle still works: light is white and cream, dark is near-black.
@@ -44,7 +44,7 @@
   --border-strong: rgba(255, 255, 255, 0.32);
 }
 
-/* Primary buttons are solid ink with paper-coloured text, like the landing CTA. */
+/* Primary buttons are solid ink with paper-coloured text, for contrast. */
 .ws[data-ui="editorial"] .ws-btn.primary,
 .ws[data-ui="editorial"] .button.primary,
 .ws[data-ui="editorial"] button.primary,
@@ -68,7 +68,7 @@
 .ws[data-ui="editorial"] .ws-btn.danger { color: #b91c1c; border-color: rgba(185, 28, 28, 0.4); }
 .ws[data-ui="editorial"][data-theme="dark"] .ws-btn.danger { color: #fca5a5; }
 
-/* Rail: a plain wordmark, no gradient mark, labels in the landing page's spaced caps. */
+/* Rail: a plain wordmark, no gradient mark, labels in spaced caps. */
 .ws[data-ui="editorial"] .ws-rail { padding: 18px 14px; }
 .ws[data-ui="editorial"] .ws-rail-brand {
   font-family: inherit;
@@ -103,7 +103,7 @@
 .ws[data-ui="editorial"] .ws-scope-org,
 .ws[data-ui="editorial"] .ws-scope-headname { letter-spacing: .12em; }
 
-/* Top bar and headings: heavier, tighter, like the big words on the landing page. */
+/* Top bar and headings: heavier, tighter, with big words. */
 .ws[data-ui="editorial"] .ws-topbar { padding: 18px 28px; }
 .ws[data-ui="editorial"] .ws-topbar h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.035em; }
 .ws[data-ui="editorial"] .ws-sec-title { font-weight: 700; letter-spacing: -0.02em; }

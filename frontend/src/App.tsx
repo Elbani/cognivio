@@ -1,7 +1,6 @@
 import { FormEvent, ReactNode, useEffect, useState } from "react";
 import { BrowserRouter, Link, Navigate, Route, Routes, useNavigate, useSearchParams } from "react-router-dom";
 import { apiRequest, Appearance, AuthResponse, DEFAULT_APPEARANCE, setUnauthorizedHandler, User, UserTheme } from "./lib/api";
-import Landing from "./Landing";
 import { Workspace } from "./workspace/Workspace";
 import { AdminView } from "./admin/AdminView";
 
@@ -90,7 +89,8 @@ function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/" element={<Landing hosted={!appearance.selfHosted} contactEmail={appearance.contactEmail ?? null} />} />
+      {/* No marketing page: the root goes straight to the app, or to login when signed out. */}
+      <Route path="/" element={<Navigate to={auth.token ? "/app" : "/login"} replace />} />
       <Route
         path="/login"
         element={auth.token ? <Navigate to="/app" replace /> : <AuthPage mode="login" ui={ui} onAuth={handleAuth} />}
@@ -386,7 +386,7 @@ function VerifyEmailPage({ ui }: { ui: UserTheme }) {
 
 // One chrome for every auth page, drawn in whichever theme the admin console picked.
 // Terminal: a dark window with traffic lights and a monospace prompt. Editorial: the
-// white page, heavy headline and black buttons of the "Read. Write. Know." landing.
+// white page, heavy headline and black buttons.
 function AuthFrame({ ui, label, onSubmit, children }: {
   ui: UserTheme;
   label: string;

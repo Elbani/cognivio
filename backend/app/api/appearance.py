@@ -19,7 +19,7 @@ SETTINGS_ID = "appearance"
 
 # Themes the frontend knows how to render (frontend/src/styles/editorial.css and the
 # auth frames in frontend/src/App.tsx). "terminal" is the original dark console look,
-# "editorial" matches the "Read. Write. Know." landing page.
+# "editorial" is the white page with black buttons.
 ALLOWED_THEMES = {"terminal", "editorial"}
 
 DEFAULTS = {"userTheme": "editorial"}
