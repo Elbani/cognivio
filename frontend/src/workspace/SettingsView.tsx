@@ -304,6 +304,13 @@ function OrganizationSection({ token, org, canManage, onOrgUpdated }: {
         <label>Your role</label>
         <input className="ws-input" value={org.role} disabled readOnly />
       </div>
+      {org.ssoEnabled && (
+        <div className="settings-field">
+          <label>Single sign-on</label>
+          <input className="ws-input" disabled readOnly
+            value={`On for ${(org.ssoDomains ?? []).join(", ")}${org.ssoRequired ? ". Password login is off for these domains." : ""}`} />
+        </div>
+      )}
       {canManage && (
         <div className="settings-actions">
           {msg && <span className={`settings-msg ${msg.kind}`}>{msg.text}</span>}

@@ -14,7 +14,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 from fastapi.staticfiles import StaticFiles
 
-from app.api import activity, admin, agent, apikeys, appearance, auth, folders, insights, maps, memories, orgs, project_docs, repos
+from app.api import activity, admin, agent, apikeys, appearance, auth, folders, insights, maps, memories, orgs, project_docs, repos, sso
 from app.core.config import settings
 from app.core.embeddings import warm as warm_embeddings
 from app.db.database import get_db, lifespan as db_lifespan
@@ -118,6 +118,7 @@ app.include_router(insights.router)
 app.include_router(repos.router)
 app.include_router(project_docs.router)
 app.include_router(admin.router)
+app.include_router(sso.router)
 app.include_router(appearance.router)
 
 # Remote MCP endpoint (Streamable HTTP) at /mcp, the zero-local-setup connector.

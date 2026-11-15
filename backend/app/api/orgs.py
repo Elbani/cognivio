@@ -81,6 +81,9 @@ def org_out(org: dict, role: str) -> OrgOut:
         slug=org["slug"],
         role=Role(role),
         plan=effective_plan(org),
+        ssoEnabled=bool((org.get("sso") or {}).get("enabled")),
+        ssoRequired=bool((org.get("sso") or {}).get("enabled") and (org.get("sso") or {}).get("required")),
+        ssoDomains=(org.get("sso") or {}).get("domains", []),
         createdAt=org["createdAt"],
         updatedAt=org["updatedAt"],
     )
@@ -269,6 +272,12 @@ async def remove_member(user_id: str, ctx: OrgCtx, db: Db) -> None:
     result = await db.memberships.delete_many({"orgId": ctx.org_id, "userId": user_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Membership not found")
+    # Offboarding: API keys the person created here stop working with them. Their own
+    # sessions need no action, since every request rechecks membership.
+    await db.api_keys.update_many(
+        {"orgId": ctx.org_id, "createdBy": user_id, "revokedAt": None},
+        {"$set": {"revokedAt": datetime.now(timezone.utc), "revokedReason": "member_removed"}},
+    )
 
 
 # --- Teams ---

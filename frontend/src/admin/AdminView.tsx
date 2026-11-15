@@ -6,6 +6,8 @@ import {
   type AdminAction,
   type AdminOrg,
   type AdminOrgDetail,
+  type AdminOrgSso,
+  type Role,
   type AdminOverview,
   type AdminUsage,
   type AdminUser,
@@ -715,8 +717,102 @@ function OrgDetailModal({ token, orgId, onClose }: { token: string; orgId: strin
                 )}
               </div>
             ))}
+
+            <h3>Single sign-on</h3>
+            <OrgSsoSection token={token} orgId={orgId} />
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function OrgSsoSection({ token, orgId }: { token: string; orgId: string }) {
+  const path = `/api/admin/orgs/${orgId}/sso`;
+  const { data, error, loading, reload } = useAdmin<AdminOrgSso>(path, token);
+  const [form, setForm] = useState<AdminOrgSso | null>(null);
+  const [secret, setSecret] = useState("");
+  const [domains, setDomains] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  useEffect(() => {
+    if (data) { setForm(data); setDomains(data.domains.join(", ")); setSecret(""); }
+  }, [data]);
+
+  if (error) return <div className="adm-error">{error}</div>;
+  if (loading || !form) return <div className="adm-empty-sm">Loading…</div>;
+
+  async function save() {
+    if (!form) return;
+    setBusy(true); setMsg(null);
+    try {
+      await apiRequest<AdminOrgSso>(path, {
+        method: "PUT", token,
+        body: {
+          issuer: form.issuer.trim(),
+          clientId: form.clientId.trim(),
+          ...(secret ? { clientSecret: secret } : {}),
+          domains: domains.split(/[\s,]+/).filter(Boolean),
+          enabled: form.enabled,
+          required: form.required,
+          defaultRole: form.defaultRole
+        }
+      });
+      setMsg({ ok: true, text: "Saved." });
+      reload();
+    } catch (e) { setMsg({ ok: false, text: e instanceof Error ? e.message : "Could not save." }); }
+    finally { setBusy(false); }
+  }
+
+  async function remove() {
+    if (!window.confirm("Remove single sign-on for this organization? Members who only signed in through it will need a password reset.")) return;
+    setBusy(true); setMsg(null);
+    try { await apiRequest(path, { method: "DELETE", token }); reload(); }
+    catch (e) { setMsg({ ok: false, text: e instanceof Error ? e.message : "Could not remove." }); }
+    finally { setBusy(false); }
+  }
+
+  const set = (patch: Partial<AdminOrgSso>) => setForm({ ...form, ...patch });
+
+  return (
+    <div className="adm-sso">
+      <p className="adm-muted">
+        OpenID Connect. Register this redirect URL with the identity provider: <code>{form.redirectUri}</code>.
+        Only claim email domains this organization owns: its identity provider can sign in as any address in them.
+      </p>
+      <label>Issuer URL
+        <input className="adm-input" value={form.issuer} placeholder="https://accounts.google.com" onChange={(e) => set({ issuer: e.target.value })} />
+      </label>
+      <label>Client ID
+        <input className="adm-input" value={form.clientId} onChange={(e) => set({ clientId: e.target.value })} />
+      </label>
+      <label>Client secret
+        <input className="adm-input" type="password" value={secret} autoComplete="off"
+          placeholder={form.hasSecret ? "Stored. Leave empty to keep it." : ""} onChange={(e) => setSecret(e.target.value)} />
+      </label>
+      <label>Email domains
+        <input className="adm-input" value={domains} placeholder="example.com, example.org" onChange={(e) => setDomains(e.target.value)} />
+      </label>
+      <label>Role for new members
+        <select className="adm-plan" value={form.defaultRole} onChange={(e) => set({ defaultRole: e.target.value as Role })}>
+          <option value="viewer">viewer</option>
+          <option value="editor">editor</option>
+          <option value="admin">admin</option>
+        </select>
+      </label>
+      <label className="adm-check">
+        <input type="checkbox" checked={form.enabled} onChange={(e) => set({ enabled: e.target.checked })} />
+        Turn on single sign-on for these domains
+      </label>
+      <label className="adm-check">
+        <input type="checkbox" checked={form.required} onChange={(e) => set({ required: e.target.checked })} />
+        Require it: turn off password login for these domains (platform admins keep theirs)
+      </label>
+      <div className="adm-sso-actions">
+        {msg && <span className={msg.ok ? "adm-muted" : "adm-sso-err"}>{msg.text}</span>}
+        {form.configured && <button className="adm-mini danger" disabled={busy} onClick={remove}>Remove</button>}
+        <button className="adm-mini" disabled={busy} onClick={save}>{busy ? "Checking the provider…" : "Save"}</button>
       </div>
     </div>
   );
@@ -957,6 +1053,14 @@ a.adm-mini{text-decoration:none;display:inline-block;margin-left:0}
 .adm-modal-body h3{margin:18px 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#566476}
 .adm-detail-meta{font-size:12px;color:#7d8da0}
 .adm-detail-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid #141b22;font-size:13px;color:#cdd6e0}
+.adm-sso{display:flex;flex-direction:column;gap:10px;font-size:13px;color:#cdd6e0}
+.adm-sso p{margin:0;line-height:1.5}
+.adm-sso code{color:#9fb0c3;background:#121922;padding:1px 5px;border-radius:4px;font-size:12px;word-break:break-all}
+.adm-sso label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:#8494a6}
+.adm-sso label.adm-check{flex-direction:row;align-items:center;gap:8px;color:#cdd6e0;font-size:13px}
+.adm-sso .adm-input{min-width:0;width:100%;box-sizing:border-box}
+.adm-sso-actions{display:flex;align-items:center;justify-content:flex-end;gap:6px}
+.adm-sso-err{color:#fca5a5;margin-right:auto}
 .adm-detail-row code{color:#9fb0c3;background:#121922;padding:1px 5px;border-radius:4px;font-size:12px}
 .adm-storage-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:10px;font-size:13px;flex-wrap:wrap}
 .adm-storage-free{color:#9fb0c3}

@@ -117,6 +117,8 @@ has one Project Map, which is the page an agent reads first.
   setup) and the server stores each run as a snapshot you can diff. Agents never retrieve
   these, so they do not crowd the knowledge base.
 - Organizations, teams, roles and scoped API keys.
+- Single sign-on with OpenID Connect (Google Workspace, Okta, Entra ID, Keycloak and
+  others), with an option to turn off password login for your email domains.
 - An admin console for users, organizations, security events and key revocation.
 
 ## What is in this repo
@@ -165,6 +167,7 @@ Set these in the environment or in `.env`. See `.env.example`.
 | `FORWARDED_ALLOW_IPS` | Addresses of the reverse proxies uvicorn trusts for the client IP. |
 | `EMBEDDINGS_ENABLED` | `false` turns off the embedding model and leaves keyword search. |
 | `CORS_ORIGINS` | Comma-separated allowed origins. The web app is same-origin in production. |
+| `SSO_SESSION_HOURS` | How long a single sign-on session lasts before the person signs in through the identity provider again. Default `12`. |
 | `CONTACT_EMAIL` | Contact address for the Teams plan when `SELF_HOSTED=false`. Shown in plan limit messages. |
 | `DISABLE_DOCS` | `true` hides `/docs`, `/redoc` and `/openapi.json`. |
 
@@ -188,6 +191,36 @@ Before the server is reachable from the internet:
 - Set `REGISTRATION_OPEN=false` once your team has accounts. Otherwise anyone who finds the
   URL can sign up. They cannot see your organization's docs, but they can create their own.
 - Or configure Resend, which makes every new account verify its email address.
+
+## Single sign-on
+
+Cognivio signs people in through any OpenID Connect provider. A platform admin (an
+account in `ADMIN_EMAILS`) sets it up per organization, in the admin console under
+Organizations, then the organization's detail view.
+
+1. Create an OIDC web application at your identity provider. Use the redirect URL the
+   form shows, which is `PUBLIC_URL` plus `/api/auth/sso/callback`.
+2. Enter the issuer URL, client ID, client secret and the email domains the organization
+   owns. Saving checks that the issuer's OpenID configuration is reachable.
+3. People with an address in those domains choose "Sign in with SSO" on the login page.
+   A first sign-in creates their account and adds them to the organization with the
+   role you picked.
+
+What to know before turning it on:
+
+- The identity provider can sign in as any address in the domains you enter, so only
+  enter domains the organization owns. This is why organization admins cannot change
+  these settings themselves. One domain belongs to one organization.
+- "Require" turns off password login and registration for those domains. Platform
+  admins keep password login, so a broken provider cannot lock you out.
+- The first time an existing account signs in through the provider, its old password
+  and sessions stop working. The person can set a new password by email reset.
+- The provider must send an `email` claim in the ID token. The issuer must use https.
+- A single sign-on session ends after `SSO_SESSION_HOURS`. Someone you deactivate at
+  the provider loses the web app within that time.
+- Removing a member from an organization revokes the API keys they created there.
+  Deactivating someone at the provider does not: there is no SCIM yet, so remove the
+  member in Cognivio too, or their keys keep working.
 
 ## Contributing
 

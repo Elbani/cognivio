@@ -92,27 +92,51 @@ def token_response(user: dict) -> TokenResponse:
 REFRESH_COOKIE = "cognivio_refresh"
 
 
-async def _issue_refresh(db, user: dict) -> str:
-    """Mint a long-lived refresh token (stored hashed) and return the raw value."""
+def email_domain(email: str) -> str:
+    return email.rsplit("@", 1)[-1].strip().lower()
+
+
+async def sso_org_for_email(db, email: str) -> dict | None:
+    """The org whose enabled single sign-on settings claim this address's domain."""
+    if "@" not in email:
+        return None
+    return await db.organizations.find_one(
+        {"sso.domains": email_domain(email), "sso.enabled": True}
+    )
+
+
+def _aware(value: datetime | None) -> datetime | None:
+    return value.replace(tzinfo=timezone.utc) if value is not None and value.tzinfo is None else value
+
+
+async def _issue_refresh(
+    db, user: dict, *, sso_org_id: str | None = None, lifetime: timedelta | None = None
+) -> str:
+    """Mint a refresh token (stored hashed) and return the raw value. A password session
+    slides for REFRESH_TOKEN_DAYS. A single sign-on session passes `lifetime`, a hard end
+    that refreshing never moves."""
     raw = secrets.token_urlsafe(48)
     now = datetime.now(timezone.utc)
-    await db.refresh_tokens.insert_one(
-        {
-            "_id": str(ObjectId()),
-            "userId": document_id(user),
-            "tokenHash": hash_api_key(raw),
-            "expiresAt": now + timedelta(days=settings.refresh_token_days),
-            "createdAt": now,
-        }
-    )
+    doc = {
+        "_id": str(ObjectId()),
+        "userId": document_id(user),
+        "tokenHash": hash_api_key(raw),
+        "expiresAt": now + (lifetime or timedelta(days=settings.refresh_token_days)),
+        "createdAt": now,
+    }
+    if lifetime is not None:
+        doc["absoluteExpiresAt"] = now + lifetime
+    if sso_org_id is not None:
+        doc["ssoOrgId"] = sso_org_id
+    await db.refresh_tokens.insert_one(doc)
     return raw
 
 
-def _set_refresh_cookie(response: Response, raw: str) -> None:
+def _set_refresh_cookie(response: Response, raw: str, max_age: int | None = None) -> None:
     response.set_cookie(
         REFRESH_COOKIE,
         raw,
-        max_age=settings.refresh_token_days * 24 * 3600,
+        max_age=max_age if max_age is not None else settings.refresh_token_days * 24 * 3600,
         httponly=True,
         samesite="lax",
         secure=settings.public_url.startswith("https"),
@@ -136,6 +160,13 @@ async def _start_session(db, response: Response, user: dict) -> TokenResponse:
 async def register(request: Request, response: Response, payload: UserCreate, db: Db, background_tasks: BackgroundTasks) -> TokenResponse:
     if not settings.registration_open:
         raise HTTPException(status_code=403, detail="Sign-up is closed on this server.")
+    # An address in a domain that an organization's single sign-on claims belongs to
+    # whoever the identity provider says. Nobody may register it with a password first.
+    if await sso_org_for_email(db, payload.email) is not None:
+        raise HTTPException(
+            status_code=403,
+            detail="Accounts for this email domain use single sign-on. Choose Sign in with SSO.",
+        )
     now = datetime.now(timezone.utc)
     user = {
         "email": payload.email.lower(),
@@ -169,6 +200,15 @@ async def register(request: Request, response: Response, payload: UserCreate, db
 @router.post("/login", response_model=TokenResponse)
 @limiter.limit("10/minute")
 async def login(request: Request, response: Response, payload: LoginRequest, db: Db) -> TokenResponse:
+    # Decided from the email's domain alone, before looking at the account, so the answer
+    # does not reveal whether the account exists. Platform admins keep password login so
+    # a broken identity provider cannot lock the operator out.
+    sso_org = await sso_org_for_email(db, payload.email)
+    if sso_org is not None and sso_org["sso"].get("required") and not is_platform_admin(payload.email):
+        raise HTTPException(
+            status_code=403,
+            detail="This email domain signs in with single sign-on. Choose Sign in with SSO.",
+        )
     user = await db.users.find_one({"email": payload.email.lower()})
     if user is None or not verify_password(payload.password, user["passwordHash"]):
         logger.warning("Failed login attempt for %s", payload.email.lower())
@@ -216,12 +256,14 @@ async def refresh(request: Request, response: Response, db: Db) -> TokenResponse
         _clear_refresh_cookie(response)
         raise HTTPException(status_code=403, detail="This account has been suspended.")
 
-    # slide the expiry forward (both server record and the browser cookie)
-    await db.refresh_tokens.update_one(
-        {"_id": rec["_id"]},
-        {"$set": {"expiresAt": now + timedelta(days=settings.refresh_token_days)}},
-    )
-    _set_refresh_cookie(response, raw)
+    # slide the expiry forward (both server record and the browser cookie), but never
+    # past a single sign-on session's hard end
+    new_expiry = now + timedelta(days=settings.refresh_token_days)
+    hard_end = _aware(rec.get("absoluteExpiresAt"))
+    if hard_end is not None:
+        new_expiry = min(new_expiry, hard_end)
+    await db.refresh_tokens.update_one({"_id": rec["_id"]}, {"$set": {"expiresAt": new_expiry}})
+    _set_refresh_cookie(response, raw, max_age=max(1, int((new_expiry - now).total_seconds())))
     return token_response(user)
 
 
