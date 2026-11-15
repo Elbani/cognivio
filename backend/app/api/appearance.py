@@ -8,11 +8,13 @@ from pydantic import BaseModel
 
 from app.api.admin import _log_action
 from app.api.deps import Db, PlatformAdmin
+from app.core.config import settings
 
 router = APIRouter(tags=["appearance"])
 
-# What the SPA shows: which visual theme the auth pages and the workspace use. One platform-wide document, edited from the admin
-# console, read by every visitor before the first screen renders.
+# What the SPA shows: which visual theme the auth pages and the workspace use. One
+# platform-wide document, edited from the admin console, read by every visitor before
+# the first screen renders.
 SETTINGS_ID = "appearance"
 
 # Themes the frontend knows how to render (frontend/src/styles/editorial.css and the
@@ -31,6 +33,8 @@ async def load_appearance(db: AsyncIOMotorDatabase) -> dict:
     doc = await db.platform_settings.find_one({"_id": SETTINGS_ID}) or {}
     return {
         "userTheme": doc.get("userTheme", DEFAULTS["userTheme"]),
+        # Lets the SPA hide plan labels and controls on an install that has no plans.
+        "selfHosted": settings.self_hosted,
         "updatedAt": doc["updatedAt"].isoformat() if isinstance(doc.get("updatedAt"), datetime) else None,
         "updatedBy": doc.get("updatedBy"),
     }

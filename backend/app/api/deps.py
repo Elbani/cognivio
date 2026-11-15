@@ -71,7 +71,8 @@ CurrentVerifiedUser = Annotated[dict, Depends(verified_user)]
 async def platform_admin(user: CurrentUser) -> dict:
     """A signed-in user whose email is on the ADMIN_EMAILS allowlist. Gates the
     platform admin console. Access is config-driven, never a self-service flag."""
-    if not is_platform_admin(user.get("email")):
+    # The allowlist names addresses, so the account must have proven it owns the address.
+    if not is_platform_admin(user.get("email")) or not user.get("emailVerified"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required"
         )

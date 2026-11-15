@@ -17,12 +17,11 @@ SEVERITY_CRITICAL = "critical"
 
 
 def client_ip(request: Request | None) -> str | None:
-    """Best-effort client IP, honoring the proxy's X-Forwarded-For."""
+    """Client IP as the server resolved it. Behind a proxy, set FORWARDED_ALLOW_IPS so
+    uvicorn takes it from X-Forwarded-For. The header is never read here, since any
+    client can send it."""
     if request is None:
         return None
-    fwd = request.headers.get("x-forwarded-for")
-    if fwd:
-        return fwd.split(",")[0].strip()
     return request.client.host if request.client else None
 
 

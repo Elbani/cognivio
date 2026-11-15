@@ -135,10 +135,10 @@ export function AdminView({ token, user, appearance, onAppearanceChanged, onLogo
       </nav>
 
       <main className="adm-main">
-        {tab === "overview" && <OverviewTab token={token} />}
+        {tab === "overview" && <OverviewTab token={token} showPlans={!appearance.selfHosted} />}
         {tab === "usage" && <UsageTab token={token} />}
         {tab === "users" && <UsersTab token={token} />}
-        {tab === "orgs" && <OrgsTab token={token} />}
+        {tab === "orgs" && <OrgsTab token={token} showPlans={!appearance.selfHosted} />}
         {tab === "appearance" && <AppearanceTab token={token} appearance={appearance} onChanged={onAppearanceChanged} />}
         {tab === "security" && <SecurityTab token={token} />}
         {tab === "actions" && <ActionsTab token={token} />}
@@ -204,7 +204,7 @@ function StorageCard({ storage }: { storage: NonNullable<AdminOverview["storage"
   );
 }
 
-function OverviewTab({ token }: { token: string }) {
+function OverviewTab({ token, showPlans }: { token: string; showPlans: boolean }) {
   const { data, error, loading } = useAdmin<AdminOverview>("/api/admin/overview?days=30", token);
   if (loading) return <div className="adm-empty">Loading…</div>;
   if (error) return <div className="adm-error">{error}</div>;
@@ -233,7 +233,7 @@ function OverviewTab({ token }: { token: string }) {
       sub: `${data.retrieval.hits}/${data.retrieval.lookups} lookups found a doc`
     },
     { n: act.totalEvents, l: "agent actions (30d)", sub: `${act.activeKeys} of ${t.apiKeys} keys active` },
-    { n: data.plans?.enterprise ?? 0, l: "enterprise orgs", sub: `${data.plans?.free ?? 0} on free` },
+    ...(showPlans ? [{ n: data.plans?.enterprise ?? 0, l: "enterprise orgs", sub: `${data.plans?.free ?? 0} on free` }] : []),
     {
       n: t.suspendedUsers,
       l: "suspended",
@@ -581,7 +581,7 @@ function UserUsageModal({ token, user, onClose }: { token: string; user: AdminUs
 
 // --- Orgs ---
 
-function OrgsTab({ token }: { token: string }) {
+function OrgsTab({ token, showPlans }: { token: string; showPlans: boolean }) {
   const [q, setQ] = useState("");
   const [query, setQuery] = useState("");
   const path = `/api/admin/orgs?limit=100${query ? `&q=${encodeURIComponent(query)}` : ""}`;
@@ -622,19 +622,21 @@ function OrgsTab({ token }: { token: string }) {
         <div className="adm-card adm-tablewrap">
           <table className="adm-table">
             <thead>
-              <tr><th>Organization</th><th>Owner</th><th>Plan</th><th>Members</th><th>Memories</th><th>Keys</th><th>Created</th><th></th></tr>
+              <tr><th>Organization</th><th>Owner</th>{showPlans && <th>Plan</th>}<th>Members</th><th>Memories</th><th>Keys</th><th>Created</th><th></th></tr>
             </thead>
             <tbody>
               {data?.orgs.map((o) => (
                 <tr key={o.id}>
                   <td><div className="adm-u-name">{o.name}</div><div className="adm-u-email">{o.slug}</div></td>
                   <td className="adm-muted">{o.ownerEmail || "-"}</td>
+                  {showPlans && (
                   <td>
                     <select className="adm-plan" value={o.plan} disabled={busy === o.id} onChange={(e) => setPlan(o, e.target.value)}>
                       <option value="free">free</option>
                       <option value="enterprise">enterprise</option>
                     </select>
                   </td>
+                  )}
                   <td>{o.members}</td>
                   <td>{o.memories}</td>
                   <td>{o.apiKeys}</td>

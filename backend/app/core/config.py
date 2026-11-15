@@ -26,20 +26,26 @@ class Settings(BaseSettings):
     # Transactional email via Resend. Empty key = email disabled (sends are skipped,
     # never an error) so local dev and tests work without it.
     resend_api_key: str = Field(default="", alias="RESEND_API_KEY")
-    email_from: str = Field(default="Cognivio <noreply@cognivio.app>", alias="EMAIL_FROM")
+    # Sender address on your Resend-verified domain. Required when RESEND_API_KEY is set.
+    email_from: str = Field(default="", alias="EMAIL_FROM")
     # Optional address shown in the Free-plan limit messages. Empty = the message tells
     # the user to ask their administrator.
     contact_email: str = Field(default="", alias="CONTACT_EMAIL")
-    # Public URL of the app, used for links in emails.
+    # Public URL of the app. Links in emails are built from it, never from the request's
+    # Host header, so it is required when RESEND_API_KEY is set.
     public_url: str = Field(default="", alias="PUBLIC_URL")
 
     # Platform-admin allowlist: comma-separated emails granted access to the admin
     # console. An allowlist (not a self-service flag) so no one can escalate themselves.
     admin_emails: str = Field(default="", alias="ADMIN_EMAILS")
 
-    # Self-hosted installs have no paid plans: true lifts every Free-plan limit (orgs,
-    # teams, members, top-level projects) for all users. Leave false on a hosted service.
-    self_hosted: bool = Field(default=False, alias="SELF_HOSTED")
+    # true (the default) means no plans: every org gets unlimited orgs, teams, members and
+    # top-level projects. Set false to run a hosted service with Free and Enterprise plans.
+    self_hosted: bool = Field(default=True, alias="SELF_HOSTED")
+
+    # false closes sign-up: only existing accounts can log in. Use it once your team has
+    # registered, on any instance reachable from the internet.
+    registration_open: bool = Field(default=True, alias="REGISTRATION_OPEN")
 
     # Self-hosted semantic embeddings (fastembed / ONNX, no PyTorch). Disabled = retrieval
     # falls back to lexical only. The model is loaded in-process and runs on CPU; KB content
@@ -81,4 +87,12 @@ if settings.jwt_secret in _WEAK_SECRETS or len(settings.jwt_secret) < 32:
         raise RuntimeError(
             "JWT_SECRET is missing or too weak. "
             "Set a cryptographically random string of at least 32 characters."
+        )
+
+if settings.resend_api_key and not os.getenv("TESTING"):
+    missing = [n for n, v in (("PUBLIC_URL", settings.public_url), ("EMAIL_FROM", settings.email_from)) if not v]
+    if missing:
+        raise RuntimeError(
+            f"RESEND_API_KEY is set, so {' and '.join(missing)} must be set too. "
+            "Email links are built from PUBLIC_URL and sent from EMAIL_FROM."
         )

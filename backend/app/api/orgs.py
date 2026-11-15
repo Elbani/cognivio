@@ -7,7 +7,7 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from pymongo.errors import DuplicateKeyError
 
-from app.api.deps import CurrentUser, CurrentVerifiedUser, Db, OrgCtx, TeamCtx, effective_plan, effective_role, ensure_role, plan_unlocked
+from app.api.deps import CurrentVerifiedUser, Db, OrgCtx, TeamCtx, effective_plan, ensure_role, plan_unlocked
 from app.core.config import settings
 from app.core.email import send_member_added
 from app.db.database import run_atomic
@@ -174,9 +174,29 @@ async def list_members(ctx: OrgCtx, db: Db) -> list[MemberOut]:
     return members
 
 
+async def _guard_owner_change(db: AsyncIOMotorDatabase, ctx: OrgCtx, target_user_id: str | None, new_role: Role | None) -> None:
+    """Only an owner may grant the owner role or change or remove an owner, and an
+    organization always keeps at least one owner."""
+    target = None
+    if target_user_id is not None:
+        target = await db.memberships.find_one(
+            {"orgId": ctx.org_id, "userId": target_user_id, "teamId": None}
+        )
+    target_is_owner = bool(target and target.get("role") == Role.owner.value)
+    if (target_is_owner or new_role == Role.owner) and ctx.role != Role.owner.value:
+        raise HTTPException(status_code=403, detail="Only an owner can assign or change the owner role")
+    if target_is_owner and new_role != Role.owner:
+        owners = await db.memberships.count_documents(
+            {"orgId": ctx.org_id, "teamId": None, "role": Role.owner.value}
+        )
+        if owners <= 1:
+            raise HTTPException(status_code=400, detail="An organization needs at least one owner")
+
+
 @router.post("/orgs/{org_id}/members", response_model=MemberOut, status_code=status.HTTP_201_CREATED)
 async def invite_member(payload: MemberInvite, ctx: OrgCtx, db: Db, background_tasks: BackgroundTasks) -> MemberOut:
     ensure_role(ctx.role, Role.admin)
+    await _guard_owner_change(db, ctx, None, payload.role)
     user = await db.users.find_one({"email": payload.email.lower()})
     if user is None:
         raise HTTPException(status_code=404, detail="No user with that email")
@@ -230,6 +250,7 @@ async def update_member(user_id: str, payload: MemberUpdate, ctx: OrgCtx, db: Db
     )
     if membership is None:
         raise HTTPException(status_code=404, detail="Membership not found")
+    await _guard_owner_change(db, ctx, user_id, payload.role)
     await db.memberships.update_one({"_id": membership["_id"]}, {"$set": {"role": payload.role.value}})
 
     user = await db.users.find_one({"_id": ObjectId(user_id)})
@@ -244,6 +265,7 @@ async def remove_member(user_id: str, ctx: OrgCtx, db: Db) -> None:
     ensure_role(ctx.role, Role.admin)
     if user_id == ctx.user_id:
         raise HTTPException(status_code=400, detail="Cannot remove yourself")
+    await _guard_owner_change(db, ctx, user_id, None)
     result = await db.memberships.delete_many({"orgId": ctx.org_id, "userId": user_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Membership not found")

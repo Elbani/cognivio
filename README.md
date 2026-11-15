@@ -45,7 +45,10 @@ docker compose up -d --build
 ```
 
 Open http://localhost:8080 and register. You get an organization and a team right away.
-With no email provider configured, new accounts skip email verification.
+
+With no email provider configured, new accounts skip email verification, and a password
+reset link is written to the server log instead of emailed. Read it with
+`docker compose logs app`.
 
 Run `docker compose up -d --build` again after pulling changes. The image contains the
 built frontend, so a rebuild is what picks up new code.
@@ -144,9 +147,12 @@ Set these in the environment or in `.env`. See `.env.example`.
 |---|---|
 | `JWT_SECRET` | Required, at least 32 characters. The API refuses to start without it. |
 | `MONGO_URI`, `MONGO_DB` | MongoDB connection and database name. |
-| `SELF_HOSTED` | `true` removes every plan limit for all users. `docker-compose.yml` sets it. |
+| `PUBLIC_URL` | The app's public URL. Email links are built from it, and the session cookie is marked Secure when it is https. |
 | `ADMIN_EMAILS` | Comma-separated emails that can open the `/admin` console. |
-| `RESEND_API_KEY`, `EMAIL_FROM`, `PUBLIC_URL` | Email through Resend. With no key, the server sends no email and new accounts skip verification. |
+| `REGISTRATION_OPEN` | `false` closes sign-up. Default `true`. |
+| `RESEND_API_KEY`, `EMAIL_FROM` | Email through Resend. With no key, the server sends no email and new accounts skip verification. With a key, `EMAIL_FROM` and `PUBLIC_URL` are required. |
+| `SELF_HOSTED` | Default `true`, which means no plan limits. `false` turns on Free and Enterprise plans for running a hosted service. |
+| `FORWARDED_ALLOW_IPS` | Addresses of the reverse proxies uvicorn trusts for the client IP. |
 | `EMBEDDINGS_ENABLED` | `false` turns off the embedding model and leaves keyword search. |
 | `CORS_ORIGINS` | Comma-separated allowed origins. The web app is same-origin in production. |
 | `CONTACT_EMAIL` | Optional address shown in plan limit messages. |
@@ -162,6 +168,16 @@ host that runs a container and reaches a MongoDB works. MongoDB is not in the im
 - The container listens on `$PORT`, or 8000 when the host sets none.
 - Point the host's health check at `/api/health`.
 - Serve it over HTTPS. Agents send their API key in a header on every request.
+- Set `FORWARDED_ALLOW_IPS` to your proxy's address. Rate limits are per client IP, and
+  without it every request appears to come from the proxy and shares one limit.
+
+Before the server is reachable from the internet:
+
+- Register the accounts listed in `ADMIN_EMAILS` yourself. With email off, nobody has to
+  prove they own an address, so whoever registers an admin address first gets the console.
+- Set `REGISTRATION_OPEN=false` once your team has accounts. Otherwise anyone who finds the
+  URL can sign up. They cannot see your organization's docs, but they can create their own.
+- Or configure Resend, which makes every new account verify its email address.
 
 ## Contributing
 

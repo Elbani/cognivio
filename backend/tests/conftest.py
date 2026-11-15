@@ -9,7 +9,9 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 os.environ.setdefault("TESTING", "1")
 os.environ.setdefault("MONGO_URI", "mongodb://localhost:27017")
-os.environ.setdefault("MONGO_DB", "markdown_notes_test")
+os.environ.setdefault("MONGO_DB", "cognivio_test")
+# The suite exercises the Free-plan limits, which only apply with SELF_HOSTED off.
+os.environ["SELF_HOSTED"] = "false"
 os.environ.setdefault("JWT_SECRET", "test-secret-not-for-production-use-only-for-testing-1234")
 os.environ.setdefault("FRONTEND_DIST", "/tmp/nonexistent")
 # Force transactional email OFF for the whole suite, so no test ever sends a real

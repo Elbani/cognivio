@@ -571,14 +571,17 @@ async def knowledge_gaps(
     require_scope(ctx, ApiScope.memory_read)
     since = datetime.now(timezone.utc) - timedelta(days=days)
     counts: dict[str, int] = {}
-    cursor = db.audit_log.find(
-        {
-            "orgId": ctx.org_id,
-            "action": {"$in": ["memory.search", "context.pack"]},
-            "resultCount": 0,
-            "at": {"$gte": since},
-        }
-    )
+    query: dict = {
+        "orgId": ctx.org_id,
+        "action": {"$in": ["memory.search", "context.pack"]},
+        "resultCount": 0,
+        "at": {"$gte": since},
+    }
+    # Search logs carry no team, so a team-scoped key is limited to its own searches
+    # instead of seeing what other teams looked for.
+    if ctx.restricted_team_id is not None:
+        query["keyId"] = ctx.key["_id"]
+    cursor = db.audit_log.find(query)
     async for e in cursor:
         key = " ".join(str(e.get("query") or "").lower().split())
         if key:

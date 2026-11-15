@@ -8,7 +8,7 @@ from functools import lru_cache
 
 import bcrypt
 from cryptography.fernet import Fernet, InvalidToken
-from jose import JWTError, jwt
+import jwt
 
 from app.core.config import settings
 
@@ -61,7 +61,7 @@ def decode_access_token(token: str) -> str | None:
         payload = jwt.decode(
             token, settings.jwt_secret, algorithms=[_JWT_ALGORITHM]
         )
-    except JWTError:
+    except jwt.InvalidTokenError:
         return None
 
     subject = payload.get("sub")

@@ -7,8 +7,8 @@ client over the platform's `/api/v1` REST API, it stores nothing itself.
 > **Prefer zero setup?** The platform also hosts a **remote** MCP server at `/mcp`
 > (Streamable HTTP), point your tool at `https://<host>/mcp` with an `ak_` key in the
 > `Authorization` header and skip this local install entirely. See **Agents → Connect a
-> tool → Remote**. This local (stdio) connector is the fallback, and the only one that
-> offers `check_drift` (it needs access to your local files).
+> tool → Remote**. This local (stdio) connector is the fallback. Its `check_drift` reads your
+> local working tree, while the remote one uses the server-side repo connection.
 
 ## 1. Install a runner (once)
 
@@ -95,6 +95,7 @@ non-obvious, capture it with write_memory.
 - **Write back:** `write_memory` (same title updates in place), `delete_memory`, `mark_helpful`
   (rate whether a doc helped, feeds retrieval ranking).
 - **Maintain:** `knowledge_gaps`, `seed_plan` (one-shot plan to initialize/fill a KB from the repo),
+  `setup_rule` (returns the always-on rule file for your editor),
   `check_drift` (this connector's version diffs your **local working tree**).
 - **Project docs:** `plan_project_docs` + `write_project_docs`, generate a human-facing developer
   handbook, stored as versioned snapshots. Separate from the KB and never used in agent retrieval.

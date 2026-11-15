@@ -87,8 +87,9 @@ async def _validate_base_url(base_url: str) -> str:
         raise HTTPException(status_code=400, detail="baseUrl host does not resolve.") from e
     for info in infos:
         ip = ipaddress.ip_address(info[4][0])
-        if (ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved
-                or ip.is_multicast or ip.is_unspecified):
+        # is_global is False for private, loopback, link-local, shared (100.64/10),
+        # reserved and unspecified ranges alike.
+        if not ip.is_global or ip.is_multicast:
             raise HTTPException(
                 status_code=400, detail="baseUrl resolves to a disallowed internal address."
             )

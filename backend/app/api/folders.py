@@ -6,7 +6,7 @@ from bson import ObjectId
 from fastapi import APIRouter, HTTPException, status
 from pymongo.errors import DuplicateKeyError
 
-from app.api.deps import CurrentUser, Db, TeamCtx, effective_role, ensure_role, plan_unlocked
+from app.api.deps import CurrentVerifiedUser, Db, TeamCtx, effective_role, ensure_role, plan_unlocked
 from app.core.config import settings
 from app.models.enums import Role
 from app.models.schemas import FolderCreate, FolderOut, FolderUpdate, document_id
@@ -100,7 +100,7 @@ async def create_folder(payload: FolderCreate, ctx: TeamCtx, db: Db) -> FolderOu
 
 
 @router.patch("/folders/{folder_id}", response_model=FolderOut)
-async def update_folder(folder_id: str, payload: FolderUpdate, user: CurrentUser, db: Db) -> FolderOut:
+async def update_folder(folder_id: str, payload: FolderUpdate, user: CurrentVerifiedUser, db: Db) -> FolderOut:
     folder = await _load_folder(db, user, folder_id, Role.editor)
     team_id = folder["teamId"]
 
@@ -123,7 +123,7 @@ async def update_folder(folder_id: str, payload: FolderUpdate, user: CurrentUser
 
 
 @router.delete("/folders/{folder_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
-async def delete_folder(folder_id: str, user: CurrentUser, db: Db) -> None:
+async def delete_folder(folder_id: str, user: CurrentVerifiedUser, db: Db) -> None:
     folder = await _load_folder(db, user, folder_id, Role.editor)
     team_id = folder["teamId"]
 

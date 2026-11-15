@@ -8,7 +8,7 @@ from fastapi import APIRouter, HTTPException, Query, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from pymongo import ReturnDocument
 
-from app.api.deps import CurrentUser, Db, TeamCtx, effective_role, ensure_role
+from app.api.deps import CurrentVerifiedUser, Db, TeamCtx, effective_role, ensure_role
 from app.models.enums import MemorySource, MemoryStatus, MemoryType, Role
 from app.models.schemas import (
     MemoryCreate,
@@ -306,7 +306,7 @@ async def delete_all_memories(ctx: TeamCtx, db: Db) -> dict:
 
 
 @router.get("/memories/{memory_id}", response_model=MemoryOut)
-async def get_memory(memory_id: str, user: CurrentUser, db: Db) -> MemoryOut:
+async def get_memory(memory_id: str, user: CurrentVerifiedUser, db: Db) -> MemoryOut:
     await _load_memory(db, user, memory_id, Role.viewer)
     memory = await db.memories.find_one_and_update(
         {"_id": memory_id, "deletedAt": None},
@@ -319,7 +319,7 @@ async def get_memory(memory_id: str, user: CurrentUser, db: Db) -> MemoryOut:
 
 
 @router.patch("/memories/{memory_id}", response_model=MemoryOut)
-async def update_memory(memory_id: str, payload: MemoryUpdate, user: CurrentUser, db: Db) -> MemoryOut:
+async def update_memory(memory_id: str, payload: MemoryUpdate, user: CurrentVerifiedUser, db: Db) -> MemoryOut:
     memory = await _load_memory(db, user, memory_id, Role.editor)
     if memory.get("deletedAt") is not None:
         raise HTTPException(status_code=404, detail="Memory not found")
@@ -366,7 +366,7 @@ async def update_memory(memory_id: str, payload: MemoryUpdate, user: CurrentUser
 
 
 @router.post("/memories/{memory_id}/verify", response_model=MemoryOut)
-async def verify_memory(memory_id: str, user: CurrentUser, db: Db) -> MemoryOut:
+async def verify_memory(memory_id: str, user: CurrentVerifiedUser, db: Db) -> MemoryOut:
     await _load_memory(db, user, memory_id, Role.editor)
     now = datetime.now(timezone.utc)
     memory = await db.memories.find_one_and_update(
@@ -380,7 +380,7 @@ async def verify_memory(memory_id: str, user: CurrentUser, db: Db) -> MemoryOut:
 
 
 @router.post("/memories/{memory_id}/approve", response_model=MemoryOut)
-async def approve_memory(memory_id: str, user: CurrentUser, db: Db) -> MemoryOut:
+async def approve_memory(memory_id: str, user: CurrentVerifiedUser, db: Db) -> MemoryOut:
     """Promote a `draft` doc to `active`, the human side of the agent write-back
     review queue. When a team enables agentWriteReview, agent writes land as drafts
     (excluded from agent retrieval) until an editor approves them here. Also stamps
@@ -404,7 +404,7 @@ async def approve_memory(memory_id: str, user: CurrentUser, db: Db) -> MemoryOut
 
 
 @router.delete("/memories/{memory_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
-async def trash_memory(memory_id: str, user: CurrentUser, db: Db) -> None:
+async def trash_memory(memory_id: str, user: CurrentVerifiedUser, db: Db) -> None:
     memory = await _load_memory(db, user, memory_id, Role.editor)
     result = await db.memories.update_one(
         {"_id": memory_id, "deletedAt": None},
@@ -415,7 +415,7 @@ async def trash_memory(memory_id: str, user: CurrentUser, db: Db) -> None:
 
 
 @router.post("/memories/{memory_id}/restore", response_model=MemoryOut)
-async def restore_memory(memory_id: str, user: CurrentUser, db: Db) -> MemoryOut:
+async def restore_memory(memory_id: str, user: CurrentVerifiedUser, db: Db) -> MemoryOut:
     await _load_memory(db, user, memory_id, Role.editor)
     memory = await db.memories.find_one_and_update(
         {"_id": memory_id, "deletedAt": {"$ne": None}},
@@ -428,7 +428,7 @@ async def restore_memory(memory_id: str, user: CurrentUser, db: Db) -> MemoryOut
 
 
 @router.delete("/memories/{memory_id}/permanent", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
-async def delete_memory_permanently(memory_id: str, user: CurrentUser, db: Db) -> None:
+async def delete_memory_permanently(memory_id: str, user: CurrentVerifiedUser, db: Db) -> None:
     await _load_memory(db, user, memory_id, Role.editor)
     result = await db.memories.delete_one({"_id": memory_id, "deletedAt": {"$ne": None}})
     if result.deleted_count == 0:
@@ -440,7 +440,7 @@ async def delete_memory_permanently(memory_id: str, user: CurrentUser, db: Db) -
 
 
 @router.get("/memories/{memory_id}/versions")
-async def list_versions(memory_id: str, user: CurrentUser, db: Db) -> dict:
+async def list_versions(memory_id: str, user: CurrentVerifiedUser, db: Db) -> dict:
     """Past revisions of a doc (newest first), metadata only. Each write, human edit or
     agent upsert, snapshots the prior content here so changes are reversible."""
     await _load_memory(db, user, memory_id, Role.viewer)
@@ -451,7 +451,7 @@ async def list_versions(memory_id: str, user: CurrentUser, db: Db) -> dict:
 
 
 @router.get("/memories/{memory_id}/versions/{version_id}")
-async def get_version(memory_id: str, version_id: str, user: CurrentUser, db: Db) -> dict:
+async def get_version(memory_id: str, version_id: str, user: CurrentVerifiedUser, db: Db) -> dict:
     """Full content of one past revision (for diffing against the current doc)."""
     await _load_memory(db, user, memory_id, Role.viewer)
     v = await db.memory_versions.find_one({"_id": version_id, "memoryId": memory_id})
@@ -461,7 +461,7 @@ async def get_version(memory_id: str, version_id: str, user: CurrentUser, db: Db
 
 
 @router.post("/memories/{memory_id}/versions/{version_id}/restore", response_model=MemoryOut)
-async def restore_version(memory_id: str, version_id: str, user: CurrentUser, db: Db) -> MemoryOut:
+async def restore_version(memory_id: str, version_id: str, user: CurrentVerifiedUser, db: Db) -> MemoryOut:
     """Roll the doc back to a past revision. Snapshots the current state first, so a
     restore is itself reversible."""
     memory = await _load_memory(db, user, memory_id, Role.editor)

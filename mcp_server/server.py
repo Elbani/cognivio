@@ -53,8 +53,8 @@ async def _delete(path: str) -> object:
 @mcp.tool()
 async def prime_context(query: str, limit: int = 6) -> object:
     """START HERE. One call that returns everything you need to begin a task:
-    the knowledge-base index map(s) for orientation PLUS the most relevant full
-    docs (with their file/class pointers and [[links]]) for your query. Prefer
+    the knowledge-base index map(s) for orientation PLUS the most relevant
+    docs as excerpts (with their file/class pointers and [[links]]) for your query. Prefer
     this over list_teams/read_map/search_memory/get_memory chains, it gathers
     the same context in a single round-trip. Pass a short description of the task,
     e.g. 'add a new federated endpoint' or 'how aggregation gates on calculation'."""
