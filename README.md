@@ -21,7 +21,7 @@ Protocol (MCP).
   For a team, contact us from the site.
 - **Self-hosted.** Cognivio is open source. Anyone can read the code, change it and run it
   on their own server, with no limit on people, teams or projects. It runs from one Docker
-  image plus MongoDB. The [quick start](#quick-start) takes three commands.
+  image plus MongoDB. The [quick start](#quick-start) takes about a minute.
 
 The server is licensed under AGPL-3.0 and the local connector under MIT. See
 [License](#license) for what that asks of you.
@@ -47,21 +47,24 @@ You need Docker.
 ```bash
 git clone https://github.com/Elbani/cognivio.git
 cd cognivio
-cp .env.example .env
-# Put the output of this command in .env as JWT_SECRET:
-python3 -c "import secrets; print(secrets.token_hex(32))"
+# Create .env from the example with a random JWT_SECRET:
+sed "s/^JWT_SECRET=.*/JWT_SECRET=$(openssl rand -hex 32)/" .env.example > .env
 
-docker compose up -d --build
+docker compose up -d
 ```
 
 Open http://localhost:8080 and register. You get an organization and a team right away.
+
+Compose pulls the published image, `ghcr.io/elbani/cognivio`, for amd64 and arm64.
+Nothing builds on your machine. On Windows without `sed`, copy `.env.example` to `.env`
+and set `JWT_SECRET` to any random string of 32 characters or more.
 
 With no email provider configured, new accounts skip email verification, and a password
 reset link is written to the server log instead of emailed. Read it with
 `docker compose logs app`.
 
-Run `docker compose up -d --build` again after pulling changes. The image contains the
-built frontend, so a rebuild is what picks up new code.
+To update, run `docker compose pull` and then `docker compose up -d`. To run your own
+changes, `docker compose up -d --build` builds the image from your checkout.
 
 ## Connect your agent
 
@@ -173,8 +176,15 @@ Set these in the environment or in `.env`. See `.env.example`.
 
 ## Deployment
 
-The `Dockerfile` builds the frontend, the connector and the backend into one image, so any
-host that runs a container and reaches a MongoDB works. MongoDB is not in the image.
+One image holds the frontend, the connector and the backend, so any host that runs a
+container and reaches a MongoDB works. MongoDB is not in the image. Use the published
+image or build your own from the `Dockerfile`.
+
+| Tag | What it is |
+|---|---|
+| `ghcr.io/elbani/cognivio:latest` | The newest release. |
+| `ghcr.io/elbani/cognivio:0.1.0` | One release. Pin this in production. |
+| `ghcr.io/elbani/cognivio:main` | The current `main` branch. |
 
 - Set `JWT_SECRET` and `MONGO_URI` as secrets on the host.
 - Set `PUBLIC_URL` and `CORS_ORIGINS` to the app's public URL, and `DISABLE_DOCS=true`.

@@ -1,5 +1,8 @@
 services:
   app:
+    # The published image. "docker compose up -d" pulls it, and
+    # "docker compose up -d --build" builds from this checkout instead.
+    image: ghcr.io/elbani/cognivio:latest
     build: .
     env_file: .env
     environment:
