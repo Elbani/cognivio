@@ -4,10 +4,17 @@ services:
     # "docker compose up -d --build" builds from this checkout instead.
     image: ghcr.io/elbani/cognivio:latest
     build: .
-    env_file: .env
+    # Optional. Create .env from .env.example to change settings.
+    env_file:
+      - path: .env
+        required: false
     environment:
       MONGO_URI: mongodb://mongo:27017
       MONGO_DB: cognivio
+      # With no JWT_SECRET set, the server creates one on first start and keeps it here.
+      JWT_SECRET_FILE: /data/jwt_secret
+    volumes:
+      - app-data:/data
     ports:
       - "8080:8000"
     depends_on:
@@ -20,3 +27,4 @@ services:
 
 volumes:
   mongo-data:
+  app-data:

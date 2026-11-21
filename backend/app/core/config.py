@@ -1,4 +1,6 @@
 import os
+import secrets
+from pathlib import Path
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -10,6 +12,11 @@ class Settings(BaseSettings):
     mongo_uri: str = Field(default="mongodb://mongo:27017", alias="MONGO_URI")
     mongo_db: str = Field(default="cognivio", alias="MONGO_DB")
     jwt_secret: str = Field(default="", alias="JWT_SECRET")
+    # Opt-in for single-machine installs: when JWT_SECRET is empty, read the secret from
+    # this file and create it with a random value on first start. The file must be on
+    # storage that outlives the container, or every restart signs everyone out and the
+    # stored repo tokens and single sign-on client secrets become unreadable.
+    jwt_secret_file: str = Field(default="", alias="JWT_SECRET_FILE")
     # Short-lived access JWT; refreshed via the long-lived refresh-token cookie below.
     access_token_minutes: int = Field(default=30, alias="ACCESS_TOKEN_MINUTES")
     refresh_token_days: int = Field(default=30, alias="REFRESH_TOKEN_DAYS")
@@ -82,7 +89,42 @@ def is_platform_admin(email: str | None) -> bool:
     return bool(email) and email.lower() in settings.admin_email_set
 
 
+def load_or_create_secret(path: str) -> str:
+    """Return the secret stored at `path`, writing a new random one if the file is
+    missing or empty. A file that holds a short value is an error, never overwritten."""
+    file = Path(path)
+    try:
+        existing = file.read_text(encoding="utf-8").strip()
+    except FileNotFoundError:
+        existing = ""
+    except OSError as exc:
+        raise RuntimeError(f"Could not read JWT_SECRET_FILE ({path}): {exc}") from exc
+    if len(existing) >= 32:
+        return existing
+    if existing:
+        raise RuntimeError(
+            f"JWT_SECRET_FILE ({path}) holds a secret shorter than 32 characters. "
+            "Replace its contents or delete the file to have a new one created."
+        )
+    secret = secrets.token_hex(32)
+    try:
+        file.parent.mkdir(parents=True, exist_ok=True)
+        # 0600: the secret signs every session, so only the server's user may read it.
+        fd = os.open(file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(secret + "\n")
+    except OSError as exc:
+        raise RuntimeError(
+            f"Could not write JWT_SECRET_FILE ({path}): {exc}. "
+            "Make the directory writable by the server, or set JWT_SECRET instead."
+        ) from exc
+    return secret
+
+
 settings = Settings()
+
+if not settings.jwt_secret and settings.jwt_secret_file and not os.getenv("TESTING"):
+    settings.jwt_secret = load_or_create_secret(settings.jwt_secret_file)
 
 if settings.jwt_secret in _WEAK_SECRETS or len(settings.jwt_secret) < 32:
     if os.getenv("TESTING"):
@@ -90,7 +132,8 @@ if settings.jwt_secret in _WEAK_SECRETS or len(settings.jwt_secret) < 32:
     else:
         raise RuntimeError(
             "JWT_SECRET is missing or too weak. "
-            "Set a cryptographically random string of at least 32 characters."
+            "Set a cryptographically random string of at least 32 characters, or set "
+            "JWT_SECRET_FILE to a path on persistent storage to have one created."
         )
 
 if settings.resend_api_key and not os.getenv("TESTING"):

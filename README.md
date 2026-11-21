@@ -42,29 +42,31 @@ The server is licensed under AGPL-3.0 and the local connector under MIT. See
 
 ## Quick start
 
-You need Docker.
+You need Docker with Compose 2.24 or newer. Docker Desktop on macOS and Windows has it.
 
 ```bash
 git clone https://github.com/Elbani/cognivio.git
 cd cognivio
-# Create .env from the example with a random JWT_SECRET:
-sed "s/^JWT_SECRET=.*/JWT_SECRET=$(openssl rand -hex 32)/" .env.example > .env
-
 docker compose up -d
 ```
 
 Open http://localhost:8080 and register. You get an organization and a team right away.
 
-Compose pulls the published image, `ghcr.io/elbani/cognivio`, for amd64 and arm64.
-Nothing builds on your machine. On Windows without `sed`, copy `.env.example` to `.env`
-and set `JWT_SECRET` to any random string of 32 characters or more.
+That is the whole setup, on macOS, Linux and Windows. Compose pulls the published image,
+`ghcr.io/elbani/cognivio`, for amd64 and arm64, and starts MongoDB next to it. Nothing
+builds on your machine. The server creates its signing secret on first start and keeps it
+in a Docker volume, and your docs live in a second volume. Both survive restarts and
+updates. `docker compose down -v` deletes them.
+
+To change a setting, copy `.env.example` to `.env`, edit it and run `docker compose up -d`
+again. See [Configuration](#configuration).
 
 With no email provider configured, new accounts skip email verification, and a password
 reset link is written to the server log instead of emailed. Read it with
 `docker compose logs app`.
 
-To update, run `docker compose pull` and then `docker compose up -d`. To run your own
-changes, `docker compose up -d --build` builds the image from your checkout.
+To update, run `git pull`, `docker compose pull` and then `docker compose up -d`. To run
+your own changes, `docker compose up -d --build` builds the image from your checkout.
 
 ## Connect your agent
 
@@ -160,7 +162,8 @@ Set these in the environment or in `.env`. See `.env.example`.
 
 | Variable | Purpose |
 |---|---|
-| `JWT_SECRET` | Required, at least 32 characters. The API refuses to start without it. |
+| `JWT_SECRET` | Signs sessions and encrypts stored repo tokens. At least 32 random characters. The API refuses to start without it, unless `JWT_SECRET_FILE` is set. |
+| `JWT_SECRET_FILE` | A file path. When `JWT_SECRET` is empty, the server reads the secret from this file and creates it on first start. The compose file sets it to a path in a volume. |
 | `MONGO_URI`, `MONGO_DB` | MongoDB connection and database name. |
 | `PUBLIC_URL` | The app's public URL. Email links are built from it, and the session cookie is marked Secure when it is https. |
 | `ADMIN_EMAILS` | Comma-separated emails that can open the `/admin` console. |
@@ -183,8 +186,39 @@ image or build your own from the `Dockerfile`.
 | Tag | What it is |
 |---|---|
 | `ghcr.io/elbani/cognivio:latest` | The newest release. |
-| `ghcr.io/elbani/cognivio:0.1.0` | One release. Pin this in production. |
+| `ghcr.io/elbani/cognivio:0.1.1` | One release. Pin this in production. |
 | `ghcr.io/elbani/cognivio:main` | The current `main` branch. |
+
+### Settings are environment variables
+
+The image has no config file inside it. Every setting in the
+[Configuration](#configuration) table is an environment variable that you pass to the
+container.
+
+To run it on your own laptop, use the [quick start](#quick-start). It needs no settings
+at all. This section is for running it on a server.
+
+- With Docker Compose, put them in `.env`. The compose file passes that file to the
+  container. Run `docker compose up -d` again after you change it.
+- With plain Docker, pass the same file with `--env-file`, or single values with `-e`:
+
+  ```bash
+  docker run -d --name cognivio -p 8080:8000 --env-file .env \
+    -e MONGO_URI="mongodb://your-mongo-host:27017" \
+    ghcr.io/elbani/cognivio:0.1.1
+  ```
+
+- On a hosting platform or Kubernetes, point it at the image and enter the variables in
+  its settings or secrets store.
+
+Outside the compose file, `MONGO_URI` and `JWT_SECRET` are required. Generate the secret
+with `openssl rand -hex 32` and keep it the same across restarts. A new value signs
+everyone out and makes the stored repo tokens and single sign-on client secrets
+unreadable. If you would rather have the server create it, mount a volume and set
+`JWT_SECRET_FILE` to a path inside it, as `docker-compose.yml` does. Back that file up
+with the database.
+
+### Checklist
 
 - Set `JWT_SECRET` and `MONGO_URI` as secrets on the host.
 - Set `PUBLIC_URL` and `CORS_ORIGINS` to the app's public URL, and `DISABLE_DOCS=true`.

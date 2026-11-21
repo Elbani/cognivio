@@ -36,7 +36,9 @@ COPY backend ./backend
 COPY --from=frontend-build /app/frontend/dist ./frontend/dist
 COPY --from=connector-build /dist ./connector
 
-RUN chown -R appuser:appuser /app
+# /data is where a mounted volume keeps the generated JWT secret (JWT_SECRET_FILE). A new
+# named volume copies this directory's owner, so appuser can write to it.
+RUN mkdir /data && chown -R appuser:appuser /app /data
 
 USER appuser
 
