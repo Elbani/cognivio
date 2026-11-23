@@ -272,7 +272,7 @@ What to know before turning it on:
   [Discussions](https://github.com/Elbani/cognivio/discussions).
 - Report a bug or ask for a feature in
   [Issues](https://github.com/Elbani/cognivio/issues).
-- Reach the maintainer, Elban Avdylaj, on X at [@axhiElban](https://x.com/axhiElban).
+- Reach the maintainer, Elban, on X at [@axhiElban](https://x.com/axhiElban).
 - Report a vulnerability privately, as [`SECURITY.md`](SECURITY.md) describes.
 
 ## Contributing
