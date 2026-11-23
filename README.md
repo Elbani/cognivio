@@ -18,7 +18,7 @@ Protocol (MCP).
 ## Two ways to use it
 
 - **Hosted.** Sign up at [cognivio.app](https://cognivio.app). It is free for one person.
-  For a team, contact us from the site.
+  For a team, email [hello@hyperlynx.blue](mailto:hello@hyperlynx.blue).
 - **Self-hosted.** Cognivio is open source. Anyone can read the code, change it and run it
   on their own server, with no limit on people, teams or projects. It runs from one Docker
   image plus MongoDB. The [quick start](#quick-start) takes about a minute.
@@ -268,10 +268,14 @@ What to know before turning it on:
 
 ## Questions and contact
 
+Cognivio is built by [HyperLynx](https://hyperlynx.blue).
+
 - Ask a question or tell us how you use Cognivio in
   [Discussions](https://github.com/Elbani/cognivio/discussions).
 - Report a bug or ask for a feature in
   [Issues](https://github.com/Elbani/cognivio/issues).
+- Email [hello@hyperlynx.blue](mailto:hello@hyperlynx.blue) for anything else, such as
+  the Teams plan or working with us.
 - Reach the maintainer, Elban, on X at [@axhiElban](https://x.com/axhiElban).
 - Report a vulnerability privately, as [`SECURITY.md`](SECURITY.md) describes.
 
