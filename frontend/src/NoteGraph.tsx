@@ -437,12 +437,68 @@ export function NoteGraph({
       needsRedrawRef.current = true;
     };
 
+    // Touch: one finger pans the graph or drags a node, a tap opens the node, and two
+    // fingers pinch to zoom. preventDefault keeps the page from scrolling under the
+    // finger and stops the browser from sending its own mouse events afterwards.
+    let pinch: { dist: number; scale: number } | null = null;
+    let touchStart: { x: number; y: number } | null = null;
+    let moved = false;
+    const spread = (t: TouchList) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+    const asMouse = (t: Touch) => ({ clientX: t.clientX, clientY: t.clientY }) as MouseEvent;
+    const stopGesture = () => { dragRef.current = null; panRef.current.dragging = false; };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      e.preventDefault();
+      if (e.touches.length === 2) {
+        stopGesture();
+        pinch = { dist: spread(e.touches) || 1, scale: scaleRef.current };
+        return;
+      }
+      const t = e.touches[0];
+      touchStart = { x: t.clientX, y: t.clientY };
+      moved = false;
+      handleDown(asMouse(t));
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
+      if (pinch && e.touches.length === 2) {
+        scaleRef.current = Math.max(0.2, Math.min(4, pinch.scale * (spread(e.touches) / pinch.dist)));
+        needsRedrawRef.current = true;
+        return;
+      }
+      const t = e.touches[0];
+      if (!t || pinch) return;
+      if (touchStart && Math.hypot(t.clientX - touchStart.x, t.clientY - touchStart.y) > 8) moved = true;
+      if (dragRef.current || panRef.current.dragging) handleMove(asMouse(t));
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      e.preventDefault();
+      if (pinch) {
+        if (e.touches.length === 0) pinch = null;
+        stopGesture();
+        return;
+      }
+      // A finger that moved was panning or dragging, so it does not open the node.
+      if (moved) stopGesture(); else handleUp();
+      setTooltip(null);
+    };
+
     canvas.addEventListener("mousedown", handleDown);
     canvas.addEventListener("mousemove", handleMove);
     canvas.addEventListener("mouseup", handleUp);
     canvas.addEventListener("mouseleave", handleLeave);
     canvas.addEventListener("wheel", handleWheel, { passive: false });
+    canvas.addEventListener("touchstart", handleTouchStart, { passive: false });
+    canvas.addEventListener("touchmove", handleTouchMove, { passive: false });
+    canvas.addEventListener("touchend", handleTouchEnd, { passive: false });
+    canvas.addEventListener("touchcancel", handleTouchEnd, { passive: false });
     return () => {
+      canvas.removeEventListener("touchstart", handleTouchStart);
+      canvas.removeEventListener("touchmove", handleTouchMove);
+      canvas.removeEventListener("touchend", handleTouchEnd);
+      canvas.removeEventListener("touchcancel", handleTouchEnd);
       canvas.removeEventListener("mousedown", handleDown);
       canvas.removeEventListener("mousemove", handleMove);
       canvas.removeEventListener("mouseup", handleUp);

@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 type Placement = "center" | "right" | "left" | "top" | "bottom";
 export type TourStep = { sel?: string; title: string; body: string; place?: Placement };
 
-export function Tour({ steps, onFinish }: { steps: TourStep[]; onFinish: () => void }) {
+export function Tour({ steps, onFinish, onStep }: { steps: TourStep[]; onFinish: () => void; onStep?: (step: TourStep) => void }) {
   const [i, setI] = useState(0);
   const [rect, setRect] = useState<DOMRect | null>(null);
   const [pos, setPos] = useState<{ top: number; left: number }>({ top: -9999, left: -9999 });
@@ -15,10 +15,19 @@ export function Tour({ steps, onFinish }: { steps: TourStep[]; onFinish: () => v
 
   const measureTarget = () => {
     const el = step.sel ? (document.querySelector(step.sel) as HTMLElement | null) : null;
+    if (el) el.scrollIntoView({ block: "nearest" });
     setRect(el ? el.getBoundingClientRect() : null);
   };
 
   useLayoutEffect(measureTarget, [i, step.sel]);
+
+  // Tell the workspace which step is showing, so it can open the menu drawer on a phone,
+  // then measure again once the drawer has finished sliding.
+  useEffect(() => {
+    onStep?.(step);
+    const t = window.setTimeout(measureTarget, 280);
+    return () => window.clearTimeout(t);
+  }, [i]);
 
   useLayoutEffect(() => {
     const tip = tipRef.current;
@@ -27,8 +36,14 @@ export function Tour({ steps, onFinish }: { steps: TourStep[]; onFinish: () => v
     const th = tip.offsetHeight;
     const vw = window.innerWidth, vh = window.innerHeight, m = 12, gap = 14;
     let top: number, left: number;
+    // On a phone there is no room beside the target, so the tip goes under it, or over
+    // it when it would not fit underneath.
+    const narrow = vw < 700 && rect && place !== "center";
     if (!rect || place === "center") {
       top = (vh - th) / 2; left = (vw - tw) / 2;
+    } else if (narrow) {
+      left = rect.left;
+      top = rect.bottom + gap + th <= vh - m ? rect.bottom + gap : rect.top - th - gap;
     } else if (place === "right") { left = rect.right + gap; top = rect.top; }
     else if (place === "left") { left = rect.left - tw - gap; top = rect.top; }
     else if (place === "bottom") { top = rect.bottom + gap; left = rect.left; }

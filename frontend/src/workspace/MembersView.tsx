@@ -81,9 +81,9 @@ export function MembersView({
         <tbody>
           {members.filter((m) => m.teamId == null).map((m) => (
             <tr key={m.userId}>
-              <td><b>{m.name}</b>{m.userId === currentUserId ? " (you)" : ""}</td>
-              <td style={{ color: "var(--text-secondary)" }}>{m.email}</td>
-              <td>
+              <td className="main"><b>{m.name}</b>{m.userId === currentUserId ? " (you)" : ""}</td>
+              <td style={{ color: "var(--text-secondary)", flex: "1 1 100%" }}>{m.email}</td>
+              <td data-label="Role">
                 {canManage && m.userId !== currentUserId ? (
                   <select className="ws-role-select" value={m.role} onChange={(e) => changeRole(m.userId, e.target.value as Role)}>
                     {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
@@ -91,7 +91,7 @@ export function MembersView({
                 ) : <span className="ty-pill">{m.role}</span>}
               </td>
               {canManage && (
-                <td style={{ textAlign: "right" }}>
+                <td className="actions" style={{ textAlign: "right" }}>
                   {m.userId !== currentUserId && <button className="ws-btn sm danger" onClick={() => remove(m.userId)}>Remove</button>}
                 </td>
               )}

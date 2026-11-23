@@ -1,4 +1,4 @@
-import { MouseEvent, useEffect, useMemo, useRef, useState } from "react";
+import { MouseEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import remarkGfm from "remark-gfm";
@@ -47,6 +47,20 @@ export function MemoryDetail(props: Props) {
   const [save, setSave] = useState<Save>("idle");
   const [historyOpen, setHistoryOpen] = useState(false);
   const editorRef = useRef<HTMLTextAreaElement>(null);
+  const titleRef = useRef<HTMLTextAreaElement>(null);
+  // Below 1000px the details panel is a drawer, opened from the Details button.
+  const [sideOpen, setSideOpen] = useState(false);
+  useEffect(() => { setSideOpen(false); }, [props.memoryId]);
+
+  // Grow the title field to fit its text, so a long title wraps instead of being cut off.
+  useLayoutEffect(() => {
+    const el = titleRef.current;
+    if (!el) return;
+    const fit = () => { el.style.height = "auto"; el.style.height = `${el.scrollHeight}px`; };
+    fit();
+    window.addEventListener("resize", fit);
+    return () => window.removeEventListener("resize", fit);
+  }, [title, memory?.id]);
   const readOnly = trashMode || !canEdit;
 
   const byId = useMemo(() => new Map(memories.map((m) => [m.id, m])), [memories]);
@@ -118,12 +132,15 @@ export function MemoryDetail(props: Props) {
   const tags = splitTags(tagsInput);
 
   return (
-    <div className="ws-detail">
+    <div className={sideOpen ? "ws-detail side-open" : "ws-detail"}>
       <div className="ws-editor-pane">
         <div className="ws-ehead">
           <div className="ws-ehead-top">
             <span className="ty-dot" style={{ background: TYPE_COLOR[memory.type], width: 12, height: 12 }} />
-            <input className="ws-title-input" value={title} onChange={(e) => setTitle(e.target.value)} disabled={readOnly}
+            {/* A textarea so a long title wraps on a narrow screen. It stays one line of text. */}
+            <textarea className="ws-title-input" ref={titleRef} rows={1} value={title} disabled={readOnly} aria-label="Title"
+              onChange={(e) => setTitle(e.target.value.replace(/\n/g, " "))}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); e.currentTarget.blur(); } }}
               onFocus={(e) => { if (title.startsWith("Untitled ")) e.target.select(); }} />
             {f.stale && (readOnly
               ? <span className="stale-pill" title={`Last verified ${f.label}`}>⚠ Stale</span>
@@ -140,6 +157,7 @@ export function MemoryDetail(props: Props) {
               </div>
             )}
             <span style={{ flex: 1 }} />
+            <button className="ws-btn sm ws-side-btn" aria-expanded={sideOpen} onClick={() => setSideOpen(true)}>Details</button>
             {trashMode ? (
               <>
                 <button className="ws-btn sm" onClick={() => props.onRestore(memory.id)}>Restore</button>
@@ -208,7 +226,9 @@ export function MemoryDetail(props: Props) {
         </div>
       </div>
 
+      <div className="ws-side-scrim" onClick={() => setSideOpen(false)} />
       <aside className="ws-side">
+        <button className="ws-iconbtn ws-side-close" aria-label="Close details" onClick={() => setSideOpen(false)}>✕</button>
         <h4>Type</h4>
         <select className="ws-select" value={memory.type} disabled={readOnly} onChange={(e) => patch({ type: e.target.value as MemoryType })}>
           {MEMORY_TYPES.map((t) => <option key={t} value={t}>{MEMORY_TYPE_LABELS[t]}</option>)}

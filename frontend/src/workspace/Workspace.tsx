@@ -85,11 +85,20 @@ export function Workspace({ token, user, ui = "terminal", selfHosted = false, co
   const [editId, setEditId] = useState<string | null>(null);
   const [dialog, setDialog] = useState<{ kind: DialogKind; value: string } | null>(null);
   const [connectOpen, setConnectOpen] = useState(false);
+  // On a phone the rail is a drawer behind the menu button. Wide screens ignore this.
+  const [navOpen, setNavOpen] = useState(false);
   const newRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { localStorage.setItem("kb-theme", theme); }, [theme]);
 
-  function finishTour() { localStorage.setItem("ac-welcomed", "1"); setTourOpen(false); }
+  function finishTour() { localStorage.setItem("ac-welcomed", "1"); setTourOpen(false); setNavOpen(false); }
+
+  useEffect(() => {
+    if (!navOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setNavOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [navOpen]);
 
   async function loadExamples() {
     if (!teamId) return;
@@ -173,6 +182,7 @@ export function Workspace({ token, user, ui = "terminal", selfHosted = false, co
   function openMemory(id: string) { setSelectedId(id); setSearchParams(viewParams(view, id)); }
   function closeMemory() { setSelectedId(null); setSearchParams(viewParams(view)); }
   function goView(v: string) {
+    setNavOpen(false);
     setSelectedId(null);
     setView(v as View);
     setSearchParams(viewParams(v as View));
@@ -325,8 +335,14 @@ export function Workspace({ token, user, ui = "terminal", selfHosted = false, co
   ];
 
   return (
-    <div className="ws" data-theme={theme} data-ui={ui}>
-      {tourOpen && teamId && <Tour steps={tourSteps} onFinish={finishTour} />}
+    <div className={navOpen ? "ws nav-open" : "ws"} data-theme={theme} data-ui={ui}>
+      {tourOpen && teamId && (
+        <Tour
+          steps={tourSteps} onFinish={finishTour}
+          // The steps that point at the rail need the drawer open on a phone.
+          onStep={(step) => setNavOpen(isNarrow() && Boolean(step.sel) && step.sel !== '[data-tour="new-doc"]')}
+        />
+      )}
       {connectOpen && orgId && (
         <ConnectDialog token={token} orgId={orgId} teamId={teamId} canManage={canManage} onClose={() => setConnectOpen(false)} />
       )}
@@ -341,12 +357,15 @@ export function Workspace({ token, user, ui = "terminal", selfHosted = false, co
         />
       )}
       <aside className="ws-rail">
-        <div className="ws-rail-brand"><span className="mk">◆</span>Cognivio</div>
+        <div className="ws-rail-brand">
+          <span className="mk">◆</span>Cognivio
+          <button className="ws-iconbtn ws-rail-close" aria-label="Close menu" onClick={() => setNavOpen(false)}>✕</button>
+        </div>
         <ScopeMenu
           token={token} orgs={orgs} teams={teams} orgId={orgId} teamId={teamId}
           showPlan={!selfHosted} contactEmail={contactEmail} canManage={canManage} canAddOrg={canAddOrg} canAddTeam={canManage && (hasTeams || teams.length === 0)}
           onSelectOrg={(id) => { setOrgId(id); setSelectedId(null); }}
-          onSelectTeam={(oid, tid) => { setOrgId(oid); setTeamId(tid); setSelectedId(null); }}
+          onSelectTeam={(oid, tid) => { setOrgId(oid); setTeamId(tid); setSelectedId(null); setNavOpen(false); }}
           onNewOrg={createOrg} onNewTeam={createTeam} onRenameOrg={renameOrg} onRenameTeam={renameTeam}
         />
 
@@ -389,13 +408,15 @@ export function Workspace({ token, user, ui = "terminal", selfHosted = false, co
           <button className="ws-navitem" onClick={onLogout}><span className="ico">⏻</span>Sign out</button>
         </div>
       </aside>
+      <div className="ws-scrim" onClick={() => setNavOpen(false)} />
 
       <main className="ws-main">
         <header className="ws-topbar">
+          <button className="ws-iconbtn ws-menu-btn" aria-label="Open menu" aria-expanded={navOpen} onClick={() => setNavOpen(true)}>☰</button>
           {selectedId ? (
             <button className="ws-btn sm" onClick={closeMemory}>← Back</button>
           ) : (
-            <div>
+            <div className="ws-topbar-title">
               <h1>{titleByView[view]}</h1>
               <span className="sub">{currentTeam ? currentTeam.name : ""}{currentOrg ? ` · ${currentOrg.name}` : ""}</span>
             </div>
@@ -471,6 +492,9 @@ export function Workspace({ token, user, ui = "terminal", selfHosted = false, co
   );
 }
 
+// True at the widths where the rail is a drawer. Keep in step with workspace.css.
+function isNarrow() { return window.matchMedia("(max-width: 860px)").matches; }
+
 function ScopeDialog({ title, label, submitLabel, initial, onSubmit, onClose }: {
   title: string; label: string; submitLabel: string; initial: string;
   onSubmit: (name: string) => Promise<void>; onClose: () => void;
@@ -532,11 +556,11 @@ function ReviewView({ pending, onOpen, onApprove, onDismiss, canEdit, reviewOn }
         <tbody>
           {pending.map((m) => (
             <tr key={m.id}>
-              <td><button className="ws-linklike" onClick={() => onOpen(m.id)} style={{ textAlign: "left" }}><b>{m.title}</b></button></td>
+              <td className="main"><button className="ws-linklike" onClick={() => onOpen(m.id)} style={{ textAlign: "left" }}><b>{m.title}</b></button></td>
               <td><span className="ty-pill"><span className="ty-dot" style={{ background: TYPE_COLOR[m.type] }} />{m.type}</span></td>
-              <td style={{ color: "var(--text-muted)" }}>{(m.sourceRef as { keyName?: string } | null)?.keyName ?? "agent"}</td>
+              <td data-label="Written by" style={{ color: "var(--text-muted)" }}>{(m.sourceRef as { keyName?: string } | null)?.keyName ?? "agent"}</td>
               {canEdit && (
-                <td style={{ textAlign: "right" }}>
+                <td className="actions" style={{ textAlign: "right" }}>
                   <button className="ws-btn sm primary" onClick={() => onApprove(m.id)}>Approve</button>{" "}
                   <button className="ws-btn sm danger" onClick={() => onDismiss(m.id)}>Dismiss</button>
                 </td>
@@ -557,10 +581,10 @@ function TrashView({ trashed, onRestore, onDelete, canEdit }: { trashed: MemoryL
       <tbody>
         {trashed.map((m) => (
           <tr key={m.id}>
-            <td><b>{m.title}</b></td>
+            <td className="main"><b>{m.title}</b></td>
             <td><span className="ty-pill"><span className="ty-dot" style={{ background: TYPE_COLOR[m.type] }} />{m.type}</span></td>
             {canEdit && (
-              <td style={{ textAlign: "right" }}>
+              <td className="actions" style={{ textAlign: "right" }}>
                 <button className="ws-btn sm" onClick={() => onRestore(m.id)}>Restore</button>{" "}
                 <button className="ws-btn sm danger" onClick={() => onDelete(m.id)}>Delete forever</button>
               </td>

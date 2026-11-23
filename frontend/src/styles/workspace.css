@@ -4,6 +4,8 @@
   display: grid;
   grid-template-columns: 244px 1fr;
   height: 100vh;
+  /* dvh tracks the visible area on phones, where the browser bars come and go. */
+  height: 100dvh;
   background: var(--bg-subtle);
   color: var(--text);
 }
@@ -273,13 +275,6 @@
 
 @media (max-width: 1000px) {
   .ws-stats { grid-template-columns: 1fr 1fr; }
-  .ws-detail { grid-template-columns: 1fr; }
-  .ws-side { display: none; }
-}
-@media (max-width: 720px) {
-  .ws { grid-template-columns: 1fr; }
-  .ws-rail { display: none; }
-  .ws-cols2 { grid-template-columns: 1fr; }
 }
 
 /* ============ Workspace themes (dark = terminal, light) ============ */
@@ -560,3 +555,193 @@
 }
 button.stale-btn { border: 0; cursor: pointer; font: inherit; font-size: 11px; font-weight: 600; }
 button.stale-btn:hover { background: rgba(245,158,11,.28); }
+
+/* ============ Small screens ============
+   Two breakpoints. Up to 1000px the doc's details panel leaves the layout and opens as
+   a drawer from the right. Up to 860px the rail does the same from the left, behind a
+   menu button in the top bar, and the page tightens up for a phone. Nothing is hidden
+   on a small screen without a control that brings it back. */
+.ws-menu-btn, .ws-rail-close, .ws-scrim, .ws-side-btn, .ws-side-close, .ws-side-scrim { display: none; }
+.ws-iconbtn {
+  width: 40px; height: 40px; flex: 0 0 auto; align-items: center; justify-content: center;
+  border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text);
+  cursor: pointer; padding: 0; font: inherit; font-size: 18px; line-height: 1;
+}
+.ws-iconbtn:hover { border-color: var(--border-strong); }
+.ws-topbar-title { min-width: 0; }
+/* The graph handles its own touch gestures (pan, drag, pinch). */
+.note-graph-container canvas { touch-action: none; }
+.ws-title-input { resize: none; overflow: hidden; display: block; padding: 0; line-height: 1.25; font-family: inherit; }
+
+@media (max-width: 1000px) {
+  .ws-detail { grid-template-columns: 1fr; }
+  .ws-editor-pane { border-right: 0; }
+  .ws-side-btn { display: inline-flex; }
+  .ws-side {
+    position: fixed; top: 0; right: 0; bottom: 0; z-index: 70; width: min(340px, 90vw);
+    border-left: 1px solid var(--border); overscroll-behavior: contain;
+    transform: translateX(102%); visibility: hidden;
+    transition: transform .22s ease, visibility 0s linear .22s;
+  }
+  .ws-detail.side-open .ws-side { transform: none; visibility: visible; box-shadow: var(--shadow-lg); transition: transform .22s ease; }
+  .ws-side-close { display: inline-flex; float: right; margin: -6px -6px 0 0; }
+  .ws-side-scrim {
+    display: block; position: fixed; inset: 0; z-index: 65; background: rgba(0, 0, 0, .45);
+    opacity: 0; pointer-events: none; transition: opacity .22s ease;
+  }
+  .ws-detail.side-open .ws-side-scrim { opacity: 1; pointer-events: auto; }
+}
+
+@media (max-width: 860px) {
+  .ws { grid-template-columns: minmax(0, 1fr); }
+  .ws-cols2 { grid-template-columns: minmax(0, 1fr); }
+
+  /* ---- Rail as a drawer ---- */
+  .ws-rail {
+    position: fixed; top: 0; bottom: 0; left: 0; z-index: 70; width: min(300px, 86vw);
+    overscroll-behavior: contain; transform: translateX(-102%); visibility: hidden;
+    transition: transform .22s ease, visibility 0s linear .22s;
+  }
+  .ws.nav-open .ws-rail { transform: none; visibility: visible; box-shadow: var(--shadow-lg); transition: transform .22s ease; }
+  .ws-scrim {
+    display: block; position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, .45);
+    opacity: 0; pointer-events: none; transition: opacity .22s ease;
+  }
+  .ws.nav-open .ws-scrim { opacity: 1; pointer-events: auto; }
+  .ws-menu-btn { display: inline-flex; }
+  .ws-rail-brand { padding-right: 0; }
+  .ws-rail-close { display: inline-flex; margin-left: auto; border: 0; background: none; }
+  .ws-navitem { padding: 12px 10px; font-size: 15px; }
+  .ws-scope-pick, .ws-scope-new { padding: 11px 10px; }
+  .ws-scope-act { padding: 9px 10px; font-size: 13px; }
+
+  /* ---- Top bar and content ---- */
+  .ws .ws-topbar { padding: 10px 14px; gap: 10px; }
+  .ws-topbar-title { flex: 1; }
+  .ws .ws-topbar h1 { font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ws-topbar .sub { display: block; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ws-topbar .right { gap: 8px; flex: 0 0 auto; }
+  .ws-topbar .ws-btn { padding: 9px 12px; font-size: 13px; white-space: nowrap; }
+  .ws-content { padding: 16px 14px 28px; }
+  .ws-newmenu-pop { width: min(240px, calc(100vw - 28px)); }
+  .ws-newmenu-pop button { padding: 12px 10px; }
+  .ws .error-banner { margin: 12px 14px !important; }
+
+  /* iOS zooms the page when a focused field's text is under 16px. */
+  .ws input:not([type="checkbox"]):not([type="radio"]), .ws select, .ws textarea { font-size: 16px; }
+  .ws .ws-title-input { font-size: 20px; }
+  .ws input[type="checkbox"], .ws input[type="radio"] { width: 18px; height: 18px; flex: 0 0 auto; }
+
+  /* ---- Finger-sized controls ---- */
+  .ws-btn.sm { padding: 8px 12px; }
+  .ws-typechip { padding: 8px 13px; }
+  .ws-tab { padding: 8px 14px; }
+  .ws-subtabs { overflow-x: auto; }
+  .ws-subtab { white-space: nowrap; padding: 12px 4px; }
+  .ws-link-row, .ws-unresolved { padding: 10px 0; }
+  .ws-unresolved .mk { padding: 8px 0 8px 12px; font-size: 13px; }
+  .ws-tagchip { padding: 6px 10px; font-size: 13px; }
+  .ws-tagchip button { padding: 4px; margin: -4px -4px -4px 0; font-size: 16px; }
+  .ws-tag-input { padding: 6px 10px; width: 110px; }
+  .ac-checklist .x { padding: 8px 10px; margin-right: -8px; font-size: 22px; }
+  .help .toc a { padding: 8px 12px; }
+  .ws-th-sort { padding: 6px 0; }
+  .settings .link { padding: 6px 0; }
+
+  /* ---- Overview ---- */
+  .ws-card { padding: 16px; }
+  .ws-stat .n { font-size: 26px; }
+  .ws-attn-row { flex-wrap: wrap; padding: 12px 0; }
+  .ws-attn-row .t { flex: 1 1 100%; overflow-wrap: anywhere; }
+  .ws-attn-row .meta { margin-left: 0; }
+  .ws-feed-item { flex-wrap: wrap; row-gap: 2px; }
+  .ws-feed-item .when { margin-left: 19px; flex: 1 1 100%; }
+  .ac-citem { flex-wrap: wrap; }
+
+  /* ---- Docs list ---- */
+  .ws-filters .ws-select { flex: 1 1 140px; min-width: 0; }
+  .ws-mrow { grid-template-columns: 14px minmax(0, 1fr); gap: 4px 12px; padding: 14px; }
+  .ws-mrow .ti { overflow-wrap: anywhere; }
+  .ws-mrow .meta { grid-column: 2; flex-wrap: wrap; white-space: normal; gap: 6px 10px; }
+  .ws-grouphdr { padding: 16px 14px 8px; }
+
+  /* ---- Doc detail ---- */
+  .ws-ehead { padding: 12px 14px; }
+  .ws-ehead-top { flex-wrap: wrap; }
+  .ws-ehead-top .ws-title-input { flex: 1 1 0; min-width: 0; width: auto; }
+  .ws-ehead-meta { gap: 6px; }
+  .ws-ehead-meta .ws-btn.sm { padding: 8px 10px; }
+  .ws-ehead-meta .ws-tab { padding: 8px 11px; }
+  .ws-editor-body textarea { padding: 14px; line-height: 1.6; }
+  .ws-preview { padding: 16px 14px 28px; overflow-wrap: anywhere; }
+  .ws-preview table { display: block; max-width: 100%; overflow-x: auto; overflow-wrap: normal; }
+  .ws-preview pre { overflow-x: auto; overflow-wrap: normal; }
+  .ws-preview img { max-width: 100%; height: auto; }
+  .ws-statusbar { padding: 8px 14px; }
+  .ws-detail .md-toolbar { flex-wrap: nowrap; overflow-x: auto; padding: 6px 10px !important; }
+  .ws-detail .md-toolbar button { flex: 0 0 auto; min-width: 38px; min-height: 38px; }
+  .ws-side { padding: 18px 16px 28px; }
+  .ws-meta-row { align-items: center; gap: 10px; }
+
+  /* ---- Tables become stacked cards. The cell marked .main is the card's heading,
+     .actions its button row, and data-label names a value that needs a name. ---- */
+  .ws-table, .ws-table tbody { display: block; }
+  .ws-table thead { display: none; }
+  .ws-table tr { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 14px; border-bottom: 1px solid var(--border); }
+  .ws-table tr:last-child { border-bottom: 0; }
+  .ws-table td { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 0; border: 0; min-width: 0; overflow-wrap: anywhere; }
+  .ws-table td:empty { display: none; }
+  .ws-table td.main { flex: 1 1 100%; order: -1; font-size: 15px; }
+  .ws-table td.actions { flex: 1 1 100%; justify-content: flex-start; gap: 8px; }
+  .ws-table td[data-label]::before {
+    content: attr(data-label); font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .05em; color: var(--text-muted);
+  }
+  .ws-table .ws-linklike { white-space: normal; text-align: left; }
+  .ws-role-select { padding: 8px 10px; }
+  .ws-pager { flex-wrap: wrap; }
+
+  /* ---- Help ---- */
+  .help h2 { font-size: 18px; margin-top: 26px; }
+  .help table { display: block; overflow-x: auto; }
+  .help ul, .help ol { margin-left: 0; padding-left: 20px; }
+  .help th, .help td { min-width: 110px; }
+  .help code { overflow-wrap: anywhere; }
+  .help pre code { overflow-wrap: normal; }
+
+  /* ---- Agents and settings ---- */
+  .key-form-row .ws-input { min-width: 0; flex: 1 1 100%; }
+  .key-form-row .ws-select { flex: 1 1 140px; min-width: 0; }
+  .key-scopes { gap: 14px 18px; }
+  .key-scopes label { min-height: 32px; }
+  .key-reveal-actions { flex-wrap: wrap; }
+  .settings-card { padding: 16px; }
+  .settings-actions { flex-wrap: wrap; }
+  .settings-segment { max-width: 100%; }
+  .settings-segment button { padding: 10px 14px; }
+  .connect-tools, .connect-transport { flex-wrap: wrap; }
+  .connect-tool { padding: 12px 8px; min-width: 96px; }
+  .connect-seg { flex: 1 1 140px; }
+
+  /* ---- Dialogs ---- */
+  .ac-overlay { padding: 12px; }
+  .ac-modal { max-height: calc(100dvh - 24px); }
+  .ac-modal-head { padding: 20px 18px 6px; }
+  .ac-modal-head h2 { font-size: 19px; }
+  .ac-modal-body { padding: 12px 18px 18px; }
+  .ac-modal-foot { padding: 12px 18px; flex-wrap: wrap; }
+  .vh-modal { width: 100%; }
+  .vh-cols { grid-template-columns: minmax(0, 1fr); }
+  .vh-list { flex-direction: row; overflow-x: auto; max-height: none; padding-bottom: 4px; }
+  .vh-item { flex: 0 0 auto; }
+  .vh-diff-head { flex-wrap: wrap; gap: 6px; }
+  .vh-diff-body { max-height: 44vh; }
+  .tour-tip { width: min(300px, calc(100vw - 24px)); }
+
+  /* ---- Graph ---- */
+  .ws-legend { top: 10px; left: 10px; padding: 8px 10px; gap: 4px; }
+  .ws-legend .li { font-size: 11px; }
+  .graph-toolbar-btn { min-width: 36px; min-height: 36px; }
+
+  .ws-empty { padding: 28px 18px; }
+}

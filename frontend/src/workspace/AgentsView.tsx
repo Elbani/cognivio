@@ -117,10 +117,10 @@ export function AgentsView({
                   {rows.map((a) => (
                     <tr key={a.id}>
                       <td style={{ color: "var(--text-muted)", whiteSpace: "nowrap" }}>{timeAgo(a.at)}</td>
-                      <td><b>{a.keyName ?? "agent"}</b></td>
-                      <td style={{ color: "var(--text-secondary)", whiteSpace: "nowrap" }}>{a.teamId ? (teamName.get(a.teamId) ?? "-") : "org-wide"}</td>
-                      <td>{ACTION_LABEL[a.action] ?? a.action}{a.query ? <span style={{ color: "var(--text-muted)" }}>, “{a.query}”</span> : null}</td>
-                      <td>
+                      <td data-label="Key"><b>{a.keyName ?? "agent"}</b></td>
+                      <td data-label="Team" style={{ color: "var(--text-secondary)", whiteSpace: "nowrap" }}>{a.teamId ? (teamName.get(a.teamId) ?? "-") : "org-wide"}</td>
+                      <td className="main">{ACTION_LABEL[a.action] ?? a.action}{a.query ? <span style={{ color: "var(--text-muted)" }}>, “{a.query}”</span> : null}</td>
+                      <td className="actions">
                         {a.memoryId ? (
                           a.memoryDeleted ? (
                             <span style={{ color: "var(--text-muted)" }} title="This doc has since been deleted">

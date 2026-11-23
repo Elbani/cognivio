@@ -116,12 +116,12 @@ export function ApiKeysPanel({
               const revoked = k.revokedAt !== null;
               return (
                 <tr key={k.id} style={revoked ? { opacity: 0.5 } : undefined}>
-                  <td><b>{k.name}</b></td>
+                  <td className="main"><b>{k.name}</b></td>
                   <td><code>{k.prefix}…</code></td>
                   <td>{k.scopes.map((s) => <span key={s} className="ty-pill" style={{ marginRight: 4 }}>{s}</span>)}</td>
-                  <td>{team ? team.name : "All"}</td>
-                  <td style={{ color: "var(--text-muted)" }}>{k.lastUsedAt ? new Date(k.lastUsedAt).toLocaleDateString() : "never"}</td>
-                  <td style={{ textAlign: "right" }}>
+                  <td data-label="Team">{team ? team.name : "All"}</td>
+                  <td data-label="Last used" style={{ color: "var(--text-muted)" }}>{k.lastUsedAt ? new Date(k.lastUsedAt).toLocaleDateString() : "never"}</td>
+                  <td className="actions" style={{ textAlign: "right" }}>
                     {revoked
                       ? <span style={{ color: "var(--text-muted)", fontSize: 12 }}>revoked</span>
                       : <button className="ws-btn sm danger" onClick={() => revoke(k.id)}>Revoke</button>}

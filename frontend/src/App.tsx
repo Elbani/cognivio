@@ -492,6 +492,20 @@ const authCss = `
 .au-editorial .au-ok{color:#1d7a46;font-size:14px;margin:-8px 0 14px}
 .au-editorial .au-link{margin-top:20px;color:#555;font-size:15px;text-decoration:underline}
 .au-editorial .au-link:hover{color:#111}
+
+/* Phones and short windows: use the visible height, keep the card clear of the brand,
+   stop iOS zooming into a focused field, and give the text links a finger-sized target. */
+.au{min-height:100dvh}
+@media(max-width:600px),(max-height:700px){
+.au-editorial{padding-top:76px}
+}
+@media(max-width:600px){
+.au{padding-left:20px;padding-right:20px}
+.au-terminal .au-body{padding:22px 18px}
+.au-terminal .au-body input{font-size:16px}
+.au .au-link{padding:10px 0;margin-top:8px}
+.au-editorial .au-brand{left:20px;padding:6px 0}
+}
 `;
 
 export function App() {

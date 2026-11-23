@@ -117,18 +117,23 @@ export function AdminView({ token, user, appearance, onAppearanceChanged, onLogo
     return ui === "editorial" ? "light" : "dark";
   });
   useEffect(() => { localStorage.setItem("kb-theme", theme); }, [theme]);
+  // On a phone the rail is a drawer behind the menu button, as in the workspace.
+  const [navOpen, setNavOpen] = useState(false);
 
   return (
-    <div className="ws adm" data-theme={theme} data-ui={ui}>
+    <div className={navOpen ? "ws adm nav-open" : "ws adm"} data-theme={theme} data-ui={ui}>
       <style>{adminCss}</style>
       <aside className="ws-rail">
-        <div className="ws-rail-brand"><span className="mk">◆</span>Cognivio</div>
+        <div className="ws-rail-brand">
+          <span className="mk">◆</span>Cognivio
+          <button className="ws-iconbtn ws-rail-close" aria-label="Close menu" onClick={() => setNavOpen(false)}>✕</button>
+        </div>
         <div className="ws-navlabel">Admin console</div>
         {TABS.map((t) => (
           <button
             key={t.id}
             className={`ws-navitem${tab === t.id ? " active" : ""}`}
-            onClick={() => setTab(t.id)}
+            onClick={() => { setTab(t.id); setNavOpen(false); }}
           >
             <span className="ico">{t.icon}</span>{t.label}
           </button>
@@ -143,10 +148,12 @@ export function AdminView({ token, user, appearance, onAppearanceChanged, onLogo
           <button className="ws-navitem" onClick={onLogout}><span className="ico">⏻</span>Sign out</button>
         </div>
       </aside>
+      <div className="ws-scrim" onClick={() => setNavOpen(false)} />
 
       <main className="ws-main">
         <header className="ws-topbar">
-          <div>
+          <button className="ws-iconbtn ws-menu-btn" aria-label="Open menu" aria-expanded={navOpen} onClick={() => setNavOpen(true)}>☰</button>
+          <div className="ws-topbar-title">
             <h1>{TABS.find((t) => t.id === tab)?.label}</h1>
             <span className="sub">Admin console{user?.email ? ` · ${user.email}` : ""}</span>
           </div>
@@ -1091,5 +1098,17 @@ const adminCss = `
 .adm-storage-legend .dot.data{background:var(--ok)}
 .adm-storage-legend .dot.index{background:var(--info)}
 .adm-storage-legend .dot.reuse{background:var(--text-muted)}
-@media(max-width:820px){.ws.adm{grid-template-columns:1fr;height:auto;min-height:100vh}.ws.adm .ws-rail{display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;border-right:0;border-bottom:1px solid var(--border)}.ws.adm .ws-rail .ws-navitem{width:auto}.ws.adm .ws-rail-foot{border-top:0;padding-top:0;display:flex;flex-wrap:wrap}.ws.adm .ws-navlabel,.ws.adm .ws-rail-spacer{display:none}}
+@media(max-width:860px){
+.adm-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.adm-cols2{grid-template-columns:minmax(0,1fr)}
+.adm-bar{grid-template-columns:minmax(0,110px) 1fr 36px}
+.adm-table{min-width:560px}
+.ws.adm input:not([type=checkbox]):not([type=radio]),.ws.adm select,.ws.adm textarea{font-size:16px}
+.adm .adm-mini{padding:8px 12px}
+.adm .adm-link{padding:10px 6px;margin:-10px -6px}
+.adm-table th,.adm-table td{padding:10px 12px}
+.adm-overlay{padding:12px}
+.adm-modal-head{padding:14px 16px}
+.adm-modal-body{padding:14px 16px 18px}
+}
 `;

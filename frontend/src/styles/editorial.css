@@ -181,3 +181,12 @@
   border-radius: var(--radius);
   padding: 10px 14px;
 }
+
+/* Phone sizes: the editorial headings come down with the rest of the top bar. */
+@media (max-width: 860px) {
+  .ws[data-ui="editorial"] .ws-rail { padding: 14px 12px; }
+  .ws[data-ui="editorial"] .ws-topbar { padding: 10px 14px; }
+  .ws[data-ui="editorial"] .ws-topbar h1 { font-size: 20px; }
+  .ws[data-ui="editorial"] .ws-title-input { font-size: 21px; }
+  .ws[data-ui="editorial"] .ws-stat .n { font-size: 32px; }
+}
