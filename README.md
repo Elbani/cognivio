@@ -266,6 +266,15 @@ What to know before turning it on:
   Deactivating someone at the provider does not: there is no SCIM yet, so remove the
   member in Cognivio too, or their keys keep working.
 
+## Questions and contact
+
+- Ask a question or tell us how you use Cognivio in
+  [Discussions](https://github.com/Elbani/cognivio/discussions).
+- Report a bug or ask for a feature in
+  [Issues](https://github.com/Elbani/cognivio/issues).
+- Reach the maintainer, Elban Avdylaj, on X at [@axhiElban](https://x.com/axhiElban).
+- Report a vulnerability privately, as [`SECURITY.md`](SECURITY.md) describes.
+
 ## Contributing
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md). Report vulnerabilities privately as described in
