@@ -158,9 +158,19 @@ async def connector_info() -> dict:
 
 frontend_dist = Path(settings.frontend_dist)
 if frontend_dist.exists():
+    class HashedAssets(StaticFiles):
+        """Vite puts a content hash in every file name under assets/, so a file never
+        changes once published and browsers may keep it for a year."""
+
+        async def get_response(self, path: str, scope):
+            response = await super().get_response(path, scope)
+            if response.status_code == 200:
+                response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+            return response
+
     app.mount(
         "/assets",
-        StaticFiles(directory=frontend_dist / "assets"),
+        HashedAssets(directory=frontend_dist / "assets"),
         name="frontend-assets",
     )
 
@@ -172,7 +182,12 @@ if frontend_dist.exists():
 
     @app.get("/{full_path:path}")
     async def frontend_app(full_path: str) -> FileResponse:
-        return FileResponse(frontend_dist / "index.html")
+        # no-cache: the browser must ask before reusing the page. Without it a browser
+        # guesses a lifetime from Last-Modified and can show an old build for hours
+        # after a deploy, because index.html is what names the current asset files.
+        return FileResponse(
+            frontend_dist / "index.html", headers={"Cache-Control": "no-cache"}
+        )
 
 else:
 
