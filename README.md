@@ -186,7 +186,7 @@ image or build your own from the `Dockerfile`.
 | Tag | What it is |
 |---|---|
 | `ghcr.io/elbani/cognivio:latest` | The newest release. |
-| `ghcr.io/elbani/cognivio:0.1.1` | One release. Pin this in production. |
+| `ghcr.io/elbani/cognivio:0.1.2` | One release. Pin this in production. |
 | `ghcr.io/elbani/cognivio:main` | The current `main` branch. |
 
 ### Settings are environment variables
@@ -205,7 +205,7 @@ at all. This section is for running it on a server.
   ```bash
   docker run -d --name cognivio -p 8080:8000 --env-file .env \
     -e MONGO_URI="mongodb://your-mongo-host:27017" \
-    ghcr.io/elbani/cognivio:0.1.1
+    ghcr.io/elbani/cognivio:0.1.2
   ```
 
 - On a hosting platform or Kubernetes, point it at the image and enter the variables in
